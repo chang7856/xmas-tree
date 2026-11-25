@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>聖誕樹互動</title>
+<meta name="theme-color" content="#07100B">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{--night:#07100B;--cream:#EFE3C3;--gold:#E8C170;--pink:#F2A7D8;--cyan:#8FE3FF;--magenta:#FF4FD8;--alert:#FF6B6B;--display:"Instrument Serif","Noto Serif TC",Georgia,serif;--body:"Noto Sans TC",-apple-system,"PingFang TC",sans-serif;--mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;color-scheme:dark}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--night);color:var(--cream);font-family:var(--body);overflow:hidden;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+#stage{position:fixed;inset:0}
+#stage canvas.gl{display:block;width:100%;height:100%}
+canvas.ov{position:fixed;inset:0;width:100%;height:100%;pointer-events:none}
+video{position:fixed;width:1px;height:1px;opacity:0;pointer-events:none}
+.ui{position:fixed;inset:0;pointer-events:none}
+.frame{position:absolute;inset:calc(14px + env(safe-area-inset-top,0px)) 14px calc(14px + env(safe-area-inset-bottom,0px))}
+.frame i{position:absolute;width:18px;height:18px;border:1.5px solid rgba(239,227,195,.8)}
+.frame i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}.frame i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}.frame i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}.frame i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.frame .info{position:absolute;right:26px;bottom:4px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(239,227,195,.75)}
+.frame .info.l{right:auto;left:26px}
+.chips{position:absolute;left:16px;right:16px;top:calc(22px + env(safe-area-inset-top,0px));display:flex;gap:8px;justify-content:space-between;align-items:center}
+.chip{font:inherit;font-size:12px;min-height:36px;padding:0 13px;border-radius:999px;border:1px solid rgba(239,227,195,.25);background:rgba(239,227,195,.06);color:var(--cream);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:inline-flex;align-items:center;gap:6px;transition:all .3s;white-space:nowrap;pointer-events:auto}
+.chip[data-s="detect"]{border-color:var(--gold);color:var(--gold)}
+.chip[data-s="on"]{border-color:var(--cyan);background:rgba(143,227,255,.14);color:#fff;box-shadow:0 0 18px rgba(143,227,255,.35)}
+.chip .n{font-family:var(--mono);font-size:11px;opacity:.8}
+button.chip{cursor:pointer}
+.greet{position:absolute;left:0;right:0;top:50%;text-align:center;opacity:0;transition:opacity .4s}
+.greet .w{display:inline-block;font-family:var(--display);font-size:clamp(36px,9vw,72px);line-height:1.05;font-weight:500;white-space:nowrap;background:linear-gradient(100deg,var(--cream) 0%,var(--pink) 40%,var(--cyan) 70%,var(--cream) 100%);background-size:220% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 18px rgba(242,167,216,.35))}
+.greet .w[lang="zh-Hant"]{font-family:"Noto Serif TC",serif;font-weight:700;letter-spacing:.06em}
+.greet .w span{display:inline-block;white-space:pre}
+.hud{position:absolute;inset:0;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--cyan);opacity:0;transition:opacity .4s}
+.hud .lab{position:absolute;white-space:nowrap;opacity:0;color:var(--magenta)}
+.hud .box{position:absolute;border:1px solid var(--alert);opacity:0}
+.hud .dash{position:absolute;border-top:1px dashed rgba(143,227,255,.5);transform-origin:0 0;opacity:0}
+.hud .txt{position:absolute;left:6%;bottom:calc(19% + env(safe-area-inset-bottom,0px));color:var(--cream);line-height:1.7;white-space:pre-wrap;max-width:88%}
+.hint{position:absolute;left:0;right:0;bottom:calc(96px + env(safe-area-inset-bottom,0px));text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(239,227,195,.85);transition:opacity .3s;padding:0 16px}
+.bar{position:absolute;left:16px;right:16px;bottom:calc(22px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;padding:10px;border-radius:16px;background:rgba(239,227,195,.06);border:1px solid rgba(239,227,195,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);pointer-events:auto;max-width:420px;margin:0 auto}
+.bar button{font:inherit;font-size:14px;font-weight:500;min-height:46px;padding:0 20px;border-radius:12px;border:1px solid rgba(239,227,195,.3);background:transparent;color:var(--cream);cursor:pointer}
+.bar button.pri{background:var(--cream);color:var(--night);border-color:var(--cream)}
+.card{position:absolute;inset:0;display:grid;place-items:center;padding:28px;text-align:center;background:rgba(7,16,11,.55);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);pointer-events:auto;opacity:0;transition:opacity .4s}
+.card.show{opacity:1}
+.card:not(.show){pointer-events:none}
+.card h4{font-family:var(--display);font-size:32px;font-weight:500;margin:0 0 8px;line-height:1.15;color:var(--cream)}
+.card p{font-size:14px;color:rgba(239,227,195,.8);margin:0 0 20px;max-width:24em;line-height:1.7}
+.card .err{color:var(--alert)}
+.card .ring{width:48px;height:48px;border-radius:50%;border:2px solid rgba(239,227,195,.2);border-top-color:var(--cream);animation:spin 1s linear infinite;margin:0 auto 16px}
+.card img{max-width:min(70vw,360px);max-height:50vh;border-radius:14px;border:1px solid rgba(239,227,195,.25);margin:0 auto 16px;display:block}
+.card .b{font:inherit;font-size:15px;font-weight:500;min-height:48px;padding:0 24px;border-radius:12px;border:1px solid var(--cream);background:var(--cream);color:var(--night);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.card .b.sec{background:transparent;color:var(--cream);border-color:rgba(239,227,195,.4);margin-left:8px}
+.card .mono{font-family:var(--mono);font-size:11px;color:rgba(239,227,195,.5);margin-top:14px}
+.toast{position:absolute;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translate(-50%,8px);background:rgba(239,227,195,.14);border:1px solid rgba(239,227,195,.3);color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;opacity:0;transition:all .3s;pointer-events:none;backdrop-filter:blur(12px);white-space:nowrap}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.card .ring{animation:none}}
+</style>
+</head>
+<body>
+<div id="stage"><canvas class="gl"></canvas></div>
+<canvas class="ov" id="ov"></canvas>
+<video id="video" playsinline muted autoplay></video>
+<div class="ui">
+  <div class="frame"><i></i><i></i><i></i><i></i><span class="info l" id="infoL">f/2.0  1/60  ISO 800</span><span class="info" id="clock">12.25  23:59</span></div>
+  <div class="chips"><span class="chip" id="chipG" data-s="idle">待機<span class="n" id="chipN"></span></span><button class="chip" id="chipL" type="button">EN</button></div>
+  <div class="greet" id="greet"><span class="w" lang="en"></span></div>
+  <div class="hud" id="hud">
+    <div class="lab" id="hl0">x: 227  y: 606</div><div class="lab" id="hl1">x: 467  y: 750</div><div class="lab" id="hl2">x: 603  y: 1182</div>
+    <div class="box" id="hb0"></div><div class="dash" id="hd0"></div>
+    <div class="txt" id="hudTxt"></div>
+  </div>
+  <div class="hint" id="hint"></div>
+  <div class="bar" id="bar"></div>
+  <div class="toast" id="toast"></div>
+  <div class="card" id="card"></div>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { ease, tween, delay, GREET, pickHud, PAL, makeStage, FORM, makeTree, makeDeco, makeButterfly, playHud, setGreet, SNOWG } from "./engine.js";
+import { HandSim, HandFilter, GestureEngine, drawHands } from "./hand.js";
+
+const MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35";
+const $ = (id) => document.getElementById(id);
+const Q = new URLSearchParams(location.search); const SIM = Q.get("sim") === "1";
+const portrait = () => innerHeight > innerWidth * 1.1;
+const W = () => innerWidth, H = () => innerHeight;
+const LANGS = ["en", "zh", "tr"]; let lang = LANGS.includes(Q.get("lang")) ? Q.get("lang") : "en";
+
+/* ---------- 場景 ---------- */
+const stageEl = $("stage"), ov = $("ov"), ovx = ov.getContext("2d"), video = $("video");
+if (!document.createElement("canvas").getContext("webgl2")) { document.body.innerHTML = `<div class="ui"><div class="card show"><div><h4 class="err">不支援</h4><p>這個瀏覽器跑不動 WebGL。用 Safari 或 Chrome 開這個連結。</p></div></div></div>`; throw new Error("no webgl2"); }
+const st = makeStage(stageEl, { fov: 40, z: 4.4 }); st.camera.position.set(0, portrait() ? -0.35 : -0.15, 4.4); st.post.uniforms.uGrain.value = 0.08; st.post.uniforms.uScan.value = 1;
+// 鏡頭畫面：影片貼圖 + 萊卡曲線；沒有相機時是暗房漸層
+const vtex = new THREE.VideoTexture(video); vtex.colorSpace = THREE.SRGBColorSpace; vtex.minFilter = THREE.LinearFilter; vtex.magFilter = THREE.LinearFilter; vtex.generateMipmaps = false;
+const cam = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ depthWrite: false, depthTest: false,
+  uniforms: { uTime: { value: 0 }, uTex: { value: vtex }, uHas: { value: 0 }, uCover: { value: new THREE.Vector4(1, 1, 0, 0) } },
+  vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+  fragmentShader: `varying vec2 vUv; uniform float uTime,uHas; uniform sampler2D uTex; uniform vec4 uCover;
+    float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+    float curve(float v,float sh,float hi){ float y=0.5+(v-0.5)*1.15; y+=sh*(1.-v)*(1.-v)*2.+hi*v*v*2.; return clamp(y,0.,1.); }
+    void main(){
+      vec2 uv=vec2(1.-vUv.x,vUv.y); uv=(uv-0.5)*uCover.xy+0.5+uCover.zw;
+      vec3 room; { vec2 p=vUv-vec2(0.5,0.62); float d=length(p*vec2(1.2,1.)); room=mix(vec3(0.030,0.028,0.026),vec3(0.006,0.009,0.007),smoothstep(0.05,0.55,d)); room+=(h(floor(vUv*300.)+fract(uTime))-0.5)*0.03; }
+      vec3 c=texture2D(uTex,uv).rgb;
+      c=vec3(curve(c.r,-0.02,0.04),curve(c.g,0.01,0.015),curve(c.b,0.03,-0.03));
+      float l=dot(c,vec3(.299,.587,.114)); c=mix(vec3(l),c,0.85); c*=0.78;
+      gl_FragColor=vec4(mix(room,c,uHas),1.); }` }));
+cam.position.z = -3; cam.renderOrder = -1; st.scene.add(cam);
+const fitCam = () => { const dist = st.camera.position.z - cam.position.z; const hh = dist * Math.tan(THREE.MathUtils.degToRad(40) / 2) * 1.02; cam.scale.set(hh * 2 * (W() / H()), hh * 2, 1); cam.position.y = st.camera.position.y;
+  const vw = video.videoWidth || 16, vh = video.videoHeight || 9; const va = vw / vh, ca = W() / H(); const u = cam.material.uniforms.uCover.value; if (va > ca) u.set(ca / va, 1, 0, 0); else u.set(1, va / ca, 0, 0); };
+addEventListener("resize", fitCam); fitCam();
+const phoneish = portrait();
+const T = makeTree(st, { count: phoneish ? 45000 : 60000, y0: phoneish ? -1.55 : -1.35, height: 2.1, textWidth: phoneish ? 1.55 : 2.9, galaxyR: phoneish ? 1.0 : 1.6, twoLine: phoneish }); T.u.uGrid.value = 2; T.glow.material.uniforms.uDim.value = 0.6;
+const D = makeDeco(st, { labels: false, zone: { x: 0, y: 0.47, r: 0.3 }, orbs: phoneish ? 4 : 6, streaks: phoneish ? 10 : 16, zDepth: 1.2, orbScale: 0.7, sides: true, region: { x0: -0.8, x1: 0.8, y0: 0.3, y1: 0.9 } });
+const B = makeButterfly(st, { scale: 0.2, pos: [0, -0.3, 1.4] });
+const greet = $("greet"), hud = $("hud"), hudTxt = $("hudTxt"), hint = $("hint"), chipG = $("chipG"), chipN = $("chipN"), chipL = $("chipL"), card = $("card"), bar = $("bar"), toast = $("toast");
+setGreet(greet, lang, false); chipL.textContent = lang.toUpperCase(); D.lang = lang;
+
+/* ---------- 手：真的或模擬 ---------- */
+const filt = new HandFilter({ minCutoff: 1.0, beta: 0.02 }); const G = new GestureEngine({ W: W() });
+let hands = [null, null], gInfo = { raw: "none", cand: "none", candN: 0, active: "none" }, lastHandSeen = 0, face = null, faceT = { x: 0, y: 0.47, r: 0.3, on: 0 };
+let landmarker = null, detector = null, lastVideoT = -1, frameN = 0;
+const sim = SIM ? new HandSim() : null;
+// 影片座標（0..1，未鏡射）→ 畫面像素（已鏡射、cover 裁切）
+const toPx = (nx, ny) => { const u = cam.material.uniforms.uCover.value; return [((1 - nx) - 0.5) / u.x * W() + W() / 2, (ny - 0.5) / u.y * H() + H() / 2]; };
+async function loadModels(onStep) {
+  const { FilesetResolver, HandLandmarker, FaceDetector } = await import(`${MP}/vision_bundle.mjs`);
+  onStep("載入辨識引擎"); const vision = await FilesetResolver.forVisionTasks(`${MP}/wasm`);
+  onStep("載入手勢模型"); landmarker = await HandLandmarker.createFromOptions(vision, { baseOptions: { modelAssetPath: "./models/hand_landmarker.task", delegate: "GPU" }, runningMode: "VIDEO", numHands: 2, minHandDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+  onStep("載入臉部模型"); detector = await FaceDetector.createFromOptions(vision, { baseOptions: { modelAssetPath: "./models/blaze_face_short_range.tflite", delegate: "GPU" }, runningMode: "VIDEO", minDetectionConfidence: 0.5 });
+}
+async function openCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+  video.srcObject = stream; await video.play(); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); }); fitCam(); cam.material.uniforms.uHas.value = 1;
+}
+function detect(now) {
+  if (SIM) { const raw = sim.sample(st.t); return raw; }
+  if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoT) return hands;
+  lastVideoT = video.currentTime;
+  const r = landmarker.detectForVideo(video, now); const out = [null, null];
+  (r.landmarks || []).slice(0, 2).forEach((lm, i) => { out[i] = lm.map(p => toPx(p.x, p.y)); });
+  if (detector && frameN % 6 === 0) { const f = detector.detectForVideo(video, now); const d = f.detections && f.detections[0]; if (d && d.boundingBox) { const b = d.boundingBox, vw = video.videoWidth, vh = video.videoHeight; const c = toPx((b.originX + b.width / 2) / vw, (b.originY + b.height / 2) / vh); const hpx = (b.height / vh) / cam.material.uniforms.uCover.value.y * H(); face = { x: (c[0] / W()) * 2 - 1, y: -((c[1] / H()) * 2 - 1), r: (hpx / 2) / (H() / 2) * 1.25 }; } else face = null; }
+  return out;
+}
+
+/* ---------- 狀態 ---------- */
+const NEXT = { ready: "張開手掌，點燈", open: "握拳，熄燈收樹", fist: "手像撒鹽一樣抖一抖，會下雪", shake: "捏合，掛一顆光球", pinch: "比愛心", heart: "左右揮手，換語言", swipe: "雙手拉開", spread: "雙手合上，變回樹", close: "雙手交疊", cross: "食指畫一顆心", point: "按截圖" };
+let state = "perm", nohandTimer = 0, crossTimer = 0, form = "tree", grabbed = -1, prevWristX = null;
+const trail = [], sparks = [], flakes = [];
+const showToast = (m) => { toast.textContent = m; toast.classList.add("show"); clearTimeout(showToast.t); showToast.t = setTimeout(() => toast.classList.remove("show"), 1500); };
+const setBar = (on) => { bar.innerHTML = on ? `<button id="bReset" type="button">重來</button><button class="pri" id="bShot" type="button">截圖</button>` : ""; bar.hidden = !on; $("bReset")?.addEventListener("click", () => { showToast("已重來"); go("ready"); }); $("bShot")?.addEventListener("click", () => go("done")); };
+const showCard = (html) => { card.innerHTML = html; card.classList.add("show"); }; const hideCard = () => card.classList.remove("show");
+function resetScene() { T.setForm(FORM.tree); form = "tree"; T.unlight(400); tween(T.u.uDim, "value", 1, 400); greet.style.opacity = 0; hud.style.opacity = 0; B.dissolve(); D.orbs.forEach(o => { o.hold = null; o.anchor = null; }); grabbed = -1; trail.length = 0; filt.reset(); G.reset(); }
+async function go(k) {
+  clearTimeout(nohandTimer); state = k; hint.style.opacity = 1;
+  if (k === "perm") { resetScene(); setBar(false); hint.textContent = ""; showCard(`<div><h4>讓樹看到妳的手</h4><p>影像只在這支手機裡處理，不會上傳。</p><button class="b" id="bAllow" type="button">${SIM ? "開始" : "允許相機"}</button><div class="mono">chang7856.github.io/xmas-tree</div></div>`); $("bAllow").addEventListener("click", () => go("loading")); }
+  if (k === "loading") { setBar(false); hint.textContent = ""; showCard(`<div><div class="ring"></div><p id="loadMsg">正在打開相機</p></div>`);
+    try { if (!SIM) await openCamera(); if (!landmarker) await loadModels(m => { const e = $("loadMsg"); if (e) e.textContent = m; }); if (state === "loading") go("ready"); }
+    catch (err) { console.error(err); go(String(err && err.name).match(/NotAllowed|NotFound|NotReadable|Security/) ? "nocam" : "unsup"); } }
+  if (k === "ready") { resetScene(); hideCard(); setBar(true); hint.textContent = NEXT.ready; lastHandSeen = st.t; if (SIM) simLoop(); }
+  if (k === "nohand") { setBar(true); hint.textContent = ""; showCard(`<div><h4>沒偵測到手</h4><p>把手放進畫面，離鏡頭一個手臂的距離。</p></div>`); }
+  if (k === "done") { setBar(false); hint.textContent = ""; const img = snapshot(); showCard(`<div><img alt="截下的畫面" src="${img}"><a class="b" id="bSave" href="${img}" download="xmas-tree.jpg">儲存</a><button class="b sec" id="bAgain" type="button">再來一次</button></div>`); $("bAgain").addEventListener("click", () => go("ready")); }
+  if (k === "nocam") { setBar(false); hint.textContent = ""; showCard(`<div><h4 class="err">沒有相機</h4><p>這個裝置沒有可用的相機，或是相機權限被拒絕了。到瀏覽器設定允許相機後重新整理。</p><button class="b sec" id="bTreeOnly" type="button" style="margin:0">只看樹</button></div>`); $("bTreeOnly").addEventListener("click", () => { hideCard(); setBar(true); state = "treeonly"; hint.textContent = "沒有相機，只看樹"; T.light(); }); }
+  if (k === "unsup") { setBar(false); hint.textContent = ""; showCard(`<div><h4 class="err">不支援</h4><p>這個瀏覽器跑不動手勢模型。用 Safari 或 Chrome 開這個連結。</p><button class="b" id="bCopy" type="button">複製連結</button></div>`); $("bCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(location.href); showToast("已複製"); } catch { showToast("請長按網址列複製"); } }); }
+  if (!["perm", "loading", "nocam", "unsup"].includes(k) && T.u.uGrow.value < 0.5) T.grow();
+}
+function snapshot() { const c = document.createElement("canvas"); const r = st.renderer.domElement; c.width = r.width; c.height = r.height; const x = c.getContext("2d"); st.composer.render(); x.drawImage(r, 0, 0); x.drawImage(ov, 0, 0, c.width, c.height); return c.toDataURL("image/jpeg", 0.88); }
+chipL.addEventListener("click", () => { lang = LANGS[(LANGS.indexOf(lang) + 1) % 3]; chipL.textContent = lang.toUpperCase(); D.lang = lang; setGreet(greet, lang, form !== "text"); if (form === "text") T.setForm(FORM[lang]); });
+
+/* ---------- 手勢 → 場景 ---------- */
+const starPx = () => { const v = new THREE.Vector3(0, (phoneish ? -1.55 : -1.35) + 2.1 + 0.08, 0); v.applyMatrix4(T.treeG.matrixWorld); v.project(st.camera); return [(v.x * 0.5 + 0.5) * W(), (-v.y * 0.5 + 0.5) * H()]; };
+const ndc = (p) => ({ x: (p[0] / W()) * 2 - 1, y: -((p[1] / H()) * 2 - 1) });
+const burstSnow = (x, y, n = 36) => { for (let i = 0; i < n; i++) flakes.push({ x: x + (Math.random() - .5) * 40, y: y + (Math.random() - .5) * 20, vx: (Math.random() - .5) * 90, vy: 20 + Math.random() * 60, t: 0, d: 2 + Math.random() * 1.5, g: SNOWG[(Math.random() * SNOWG.length) | 0], s: 9 + Math.random() * 9, r: Math.random() * 6.28 }); };
+G.on((type, g) => {
+  const hs = hands.filter(Boolean);
+  if (type === "enter") {
+    if (g === "open") { T.light(); const [sx, sy] = starPx(); const w = hs[0][0]; for (let i = 0; i < 70; i++) sparks.push({ x: w[0], y: w[1], tx: sx, ty: sy, t: 0, d: 0.7 + Math.random() * 0.5, k: (Math.random() - 0.5) * 160 }); hint.textContent = NEXT.open; prevWristX = w[0]; }
+    if (g === "fist") { form = "tree"; T.collapse(); greet.style.opacity = 0; hint.textContent = NEXT.fist; }
+    if (g === "pinch") { const tip = ndc(hs[0][8]); let best = -1, bd = 9; D.orbs.forEach((o, i) => { const d = Math.hypot((o.x - tip.x) * (W() / H()), o.y - tip.y); if (d < bd) { bd = d; best = i; } }); grabbed = best; if (best >= 0) { D.orbs[best].anchor = null; D.orbs[best].hold = tip; } hint.textContent = "放開，掛到樹上"; }
+    if (g === "point") hint.textContent = NEXT.point;
+    if (g === "heart") { form = "text"; T.light(); T.setForm(FORM[lang]); hint.textContent = NEXT.heart; }
+    if (g === "cross") { clearTimeout(crossTimer); tween(T.u.uDim, "value", 0.45, 500); hud.style.opacity = 1; B.show(); playHud(hud, hudTxt, pickHud(lang)); hint.textContent = ""; }
+  }
+  if (type === "exit") {
+    if (g === "open") prevWristX = null;
+    if (g === "pinch" && grabbed >= 0) { const o = D.orbs[grabbed]; o.hold = null; o.anchor = { x: (Math.random() - 0.5) * 0.5, y: -0.55 + Math.random() * 0.4 }; o.flash = 1; grabbed = -1; showToast("掛上去了"); hint.textContent = NEXT.pinch; }
+    if (g === "cross") { crossTimer = setTimeout(() => { B.dissolve(); hud.style.opacity = 0; tween(T.u.uDim, "value", 1, 600); hint.textContent = NEXT.cross; }, 4000); }
+  }
+  if (type === "swipe") { if (form === "text") { lang = LANGS[(LANGS.indexOf(lang) + 1) % 3]; chipL.textContent = lang.toUpperCase(); D.lang = lang; T.setForm(FORM[lang]); } else T.dragV += g === "right" ? 2.2 : -2.2; hint.textContent = NEXT.swipe; }
+  if (type === "spread") { form = "galaxy"; T.light(); T.setForm(FORM.galaxy); hint.textContent = NEXT.spread; }
+  if (type === "close") { form = "tree"; T.setForm(FORM.tree); hint.textContent = NEXT.close; }
+  if (type === "shake") { burstSnow(g.x, g.y); hint.textContent = NEXT.shake; }
+});
+
+/* ---------- 每幀 ---------- */
+const names = { open: "張開手掌", fist: "握拳", pinch: "捏合", point: "食指指向", heart: "比愛心", cross: "雙手交疊", wide: "雙手張開", "two-open": "雙手張開", two: "兩隻手", none: "待機" };
+st.hooks.push({ update(s, dt) {
+  cam.material.uniforms.uTime.value = s.t; if (vtex.image && vtex.image.readyState >= 2) vtex.needsUpdate = true;
+  const w = greet.querySelector(".w"); const hx = hands[0] ? (hands[0][0][0] / W()) * 2 - 1 : Math.sin(s.t * 0.7) * 0.6; w.style.backgroundPosition = `${50 + hx * 45}% 0`;
+  frameN++; const live = ["ready", "nohand", "treeonly"].includes(state);
+  if (live && state !== "treeonly") { const raw = detect(performance.now()); hands = filt.apply(raw, s.t); G.W = W(); gInfo = G.update(hands, s.t); if (hands.some(Boolean)) lastHandSeen = s.t; }
+  // 臉的禁區
+  if (face) { faceT.x += (face.x - faceT.x) * 0.1; faceT.y += (face.y - faceT.y) * 0.1; faceT.r += (face.r - faceT.r) * 0.1; } D.zone.x = faceT.x; D.zone.y = faceT.y; D.zone.r = faceT.r;
+  // 捏住的光球、光軌、連續轉樹
+  if (grabbed >= 0 && hands[0]) D.orbs[grabbed].hold = ndc(hands[0][8]);
+  if (gInfo.active === "point" && hands[0]) trail.push({ x: hands[0][8][0], y: hands[0][8][1], t: s.t });
+  while (trail.length && s.t - trail[0].t > 1.2) trail.shift();
+  if (gInfo.active === "open" && hands[0] && prevWristX !== null) { const dx = hands[0][0][0] - prevWristX; if (Math.abs(dx) < W() * 0.08) T.rot += dx / W() * 2.6; prevWristX = hands[0][0][0]; }
+  // 沒偵測到手
+  if (state === "ready" && s.t - lastHandSeen > 3 && !hands.some(Boolean)) go("nohand");
+  if (state === "nohand" && hands.some(Boolean)) { hideCard(); state = "ready"; hint.textContent = NEXT.ready; }
+  // 晶片
+  if (gInfo.active !== "none") { chipG.dataset.s = "on"; chipG.firstChild.textContent = names[gInfo.active] + " 成立"; chipN.textContent = ""; }
+  else if (gInfo.cand !== "none") { chipG.dataset.s = "detect"; chipG.firstChild.textContent = "偵測中 " + (names[gInfo.cand] || gInfo.cand); chipN.textContent = `${Math.min(gInfo.candN, 6)}/6`; }
+  else { chipG.dataset.s = "idle"; chipG.firstChild.textContent = hands.some(Boolean) ? "就緒" : "待機"; chipN.textContent = ""; }
+  // 骨架、光軌、星火、雪
+  const DPR = Math.min(devicePixelRatio || 1, 2); if (ov.width !== W() * DPR || ov.height !== H() * DPR) { ov.width = W() * DPR; ov.height = H() * DPR; }
+  ovx.setTransform(DPR, 0, 0, DPR, 0, 0); ovx.clearRect(0, 0, W(), H());
+  drawHands(ovx, hands, { label: gInfo.active !== "none" ? gInfo.active : null });
+  if (trail.length > 1) { ovx.save(); ovx.lineCap = "round"; ovx.lineJoin = "round"; ovx.shadowColor = "rgba(232,193,112,.9)"; ovx.shadowBlur = 14; for (let i = 1; i < trail.length; i++) { const a = 1 - (s.t - trail[i].t) / 1.2; ovx.strokeStyle = `rgba(232,193,112,${a})`; ovx.lineWidth = 2 + 3 * a; ovx.beginPath(); ovx.moveTo(trail[i - 1].x, trail[i - 1].y); ovx.lineTo(trail[i].x, trail[i].y); ovx.stroke(); } ovx.restore(); }
+  for (let i = sparks.length - 1; i >= 0; i--) { const p = sparks[i]; p.t += dt; const u = Math.min(1, p.t / p.d); const e = 1 - Math.pow(1 - u, 3); const x = p.x + (p.tx - p.x) * e + Math.sin(u * Math.PI) * p.k, y = p.y + (p.ty - p.y) * e - Math.sin(u * Math.PI) * 60; ovx.fillStyle = `rgba(232,193,112,${1 - u * 0.6})`; ovx.shadowColor = "rgba(232,193,112,.8)"; ovx.shadowBlur = 8; ovx.beginPath(); ovx.arc(x, y, 1.6 + 1.4 * (1 - u), 0, 6.283); ovx.fill(); if (u >= 1) sparks.splice(i, 1); }
+  ovx.shadowBlur = 0; ovx.textAlign = "center"; ovx.textBaseline = "middle";
+  for (let i = flakes.length - 1; i >= 0; i--) { const f = flakes[i]; f.t += dt; f.vy += 70 * dt; f.x += f.vx * dt + Math.sin(f.t * 3 + f.r) * 12 * dt; f.y += f.vy * dt; const a = 1 - f.t / f.d; ovx.fillStyle = `rgba(239,227,195,${Math.max(0, a) * 0.9})`; ovx.font = `500 ${f.s}px "Noto Sans TC","IBM Plex Mono",sans-serif`; ovx.fillText(f.g, f.x, f.y); if (f.t >= f.d || f.y > H() + 20) flakes.splice(i, 1); }
+} });
+
+/* ---------- 模擬模式：沒有相機時用虛擬手輪流做手勢（?sim=1） ---------- */
+const K = (pose, x, y, at, extra = {}) => ({ pose, x: x / 390 * W(), y: y / 844 * H(), at, size: 80 * W() / 390, ...extra, left: !!extra.left });
+const TRACKS = {
+  open: () => [[K("relax", 250, 900, 0), K("open", 240, 560, 0.6, { hold: 2.6 })], null],
+  fist: () => [[K("open", 240, 560, 0), K("fist", 240, 570, 0.5, { hold: 2.2 })], null],
+  shake: () => { const ks = [K("relax", 230, 420, 0)]; for (let i = 1; i <= 8; i++) ks.push(K("relax", 230, 420 + (i % 2 ? 40 : -40), 0.3 + i * 0.12, { hold: i === 8 ? 1 : 0 })); return [ks, null]; },
+  pinch: () => [[K("open", 310, 400, 0), K("pinch", 310, 400, 0.5), K("pinch", 200, 560, 1.6), K("open", 205, 560, 1.9, { hold: 1.2 })], null],
+  heart: () => [[K("relax", 300, 820, 0, { left: true }), K("heart", 274, 540, 0.7, { left: true, rot: -0.3, hold: 3 })], [K("relax", 90, 820, 0), K("heart", 116, 540, 0.7, { rot: 0.3, hold: 3 })]],
+  swipe: () => [[K("open", 70, 540, 0), K("open", 70, 540, 0.35), K("open", 330, 540, 0.65, { hold: 1 })], null],
+  spread: () => [[K("open", 160, 560, 0, { left: true }), K("open", 160, 560, 0.3, { left: true }), K("open", 62, 560, 0.75, { left: true, hold: 2.2 })], [K("open", 230, 560, 0), K("open", 230, 560, 0.3), K("open", 328, 560, 0.75, { hold: 2.2 })]],
+  close: () => [[K("open", 62, 560, 0, { left: true }), K("open", 62, 560, 0.3, { left: true }), K("open", 160, 560, 0.75, { left: true, hold: 2 })], [K("open", 328, 560, 0), K("open", 328, 560, 0.3), K("open", 230, 560, 0.75, { hold: 2 })]],
+  cross: () => [[K("relax", 110, 820, 0, { left: true }), K("open", 206, 600, 0.6, { left: true, rot: 0.45, hold: 3.6 })], [K("relax", 280, 820, 0), K("open", 184, 600, 0.6, { rot: -0.45, hold: 3.6 })]],
+  point: () => { const ks = [K("point", 200, 600, 0, { size: 70 })]; for (let i = 0; i <= 26; i++) { const t = (i / 26) * Math.PI * 2; ks.push(K("point", 195 + 16 * Math.pow(Math.sin(t), 3) * 5.2, 520 - (13 * Math.cos(t) - 5 * Math.cos(2 * t) - 2 * Math.cos(3 * t) - Math.cos(4 * t)) * 5.2, 0.5 + i * 0.1, { size: 70, hold: i === 26 ? 1.2 : 0 })); } return [ks, null]; },
+};
+let simRunning = false;
+async function simLoop() { if (simRunning) return; simRunning = true; const seq = [["open", 4000], ["fist", 5200], ["shake", 3200], ["pinch", 3600], ["heart", 4200], ["swipe", 3000], ["spread", 3800], ["close", 3200], ["cross", 8200], ["point", 4600]];
+  while (state === "ready" || state === "nohand") { for (const [g, ms] of seq) { if (state !== "ready" && state !== "nohand") break; sim.play(TRACKS[g](), st.t); filt.reset(); G.reset(); await delay(ms); } } simRunning = false; }
+
+setInterval(() => { const d = new Date(); $("clock").textContent = `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}  ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; }, 1000);
+const place = () => { const P = portrait(); $("hl0").style.cssText = "left:10%;top:36%"; $("hl1").style.cssText = "left:58%;top:42%"; $("hl2").style.cssText = "left:62%;top:66%"; $("hb0").style.cssText = "left:36%;top:44%;width:16%;height:12%"; $("hd0").style.cssText = "left:50%;top:48%;width:18%;transform:rotate(24deg)"; greet.style.top = P ? "50%" : "38%"; };
+place(); addEventListener("resize", place);
+go("perm"); T.grow();
+</script>
+</body>
+</html>

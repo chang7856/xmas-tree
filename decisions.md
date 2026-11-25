@@ -1,0 +1,24 @@
+# decisions
+
+- 2026-11-24 「聖誕獸跟整理背後的動畫」解讀為「聖誕樹跟整體背後的動畫」；「獸」另留給雙手交疊時飛出的光蝴蝶。
+- 2026-11-24 樹用即時 WebGL 點雲畫（不是生成圖片），因為要跟手即時互動；顆粒、光暈、色散全部在後製 shader 做。
+- 2026-11-24 參考 Reel 的手勢偵測沿用：MediaPipe HandLandmarker（瀏覽器端，不上傳影像）。
+- 2026-11-24 第一步交付 Design System 頁，第二步互動原型，第三步程式碼；每步 Jessie 點頭才往下。
+- 2026-11-24 已安裝 skill：threejs-shaders、threejs-postprocessing、threejs-geometry、threejs-animation、threejs-performance、threejs-fundamentals（cloudai-x/threejs-skills, r186）、gsap-scrolltrigger、lightweight-3d-effects（freshtechbro/claudedesignskills）。
+- Open：成品要掛在哪個網址（需要 https 才能開相機）。
+- Open：雙手交疊的文字內容由 Jessie 提供或我先寫一版。
+- 2026-11-24 Design System 頁是白底文件、產品樣本放深色舞台（Jessie 規則：頁面白底；產品本身是夜底）。
+- 2026-11-24 樹的點亮只讓 2% 的點當燈泡（HDR 1.4、bloom 門檻 0.8、半徑 0.4），其餘只染 15% 色，否則整棵被光暈蓋成白色。
+- 2026-11-24 手機畫面的光球固定在臉兩側（x ±0.55 到 0.85），不進樹的區域。
+- 2026-11-24 雙手交疊的 HUD 文字先寫第一版（被好好接住的那一刻 / the warmth of being held / sevilmek: 0x4C4F5645），等 Jessie 改。
+- 2026-11-24 Design System 頁用 three.js 0.186.0（jsDelivr import map），同一套 shader 之後直接拿去原型與成品。
+- 2026-11-25 Jessie 要「超出預期」：點雲改成會變形的身體（樹／祝福文字／星系／星），新增手勢「雙手拉開＝星系」，比愛心改成「樹變成祝福文字」，共八個手勢。
+- 2026-11-25 新增材質：鏡面地板、全息箔背景、CRT 掃描帶、數位字元雪、ASCII 飾品、星的光漏。token 都寫在 Design System 的「材質」。
+- 2026-11-25 祝福文字形態用細一級的像素格（0.62 倍）且亮度壓在 bloom 門檻下，否則字會糊成一團；手機上英文與土耳其文拆成兩行。
+- 2026-11-25 Google Fonts 的 Noto Serif TC 是分段載入，畫 canvas 取樣前要 document.fonts.load(字體, 文字) 帶上實際文字，否則取到方塊。
+- 2026-11-25 Jessie 確認：是聖誕樹（獸＝蝴蝶）；八個手勢全留；雙手交疊的文字由我先寫第一版（21 句，三語各 6 到 8 句，混數字與數位符號，每次抽三句）；網址由我決定。
+- 2026-11-25 網址決定：先掛 GitHub Pages（chang7856.github.io/xmas-tree，https 可開相機），之後要換 healyou.io 子網域只需加 CNAME。
+- 2026-11-25 原型的手不是預錄影片，是模擬的 21 個關鍵點（hand.js）：濾波（One Euro）、手勢判斷（classify）、狀態機（6 幀成立／10 幀解除、揮手與拉開看速度）與成品同一套，成品只換資料來源為 MediaPipe。
+- 2026-11-25 引擎抽成 engine.js，Design System 與原型共用；Artifact 以附檔方式發佈 engine.js、hand.js。
+- 2026-11-25 原型頁白底、中文；上方兩排狀態按鈕（流程、手勢）、左設定、中手機、右說明；每個手勢的判斷規則寫在說明面板。
+- 2026-11-25 燈泡比例與字元尺寸隨畫布高度縮放（uLamp、uSizeK），bloom 強度也隨高度縮放，否則小畫面整棵變白。

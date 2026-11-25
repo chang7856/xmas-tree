@@ -1,0 +1,544 @@
+<title>聖誕樹互動 Design System</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Noto+Serif+TC:wght@500;700&family=Noto+Sans+TC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 版面：白紙上的文件，單欄 920px；所有產品樣本放在深色舞台裡。 */
+:root{
+  --paper:#FFFFFF; --ink:#141A16; --ink2:#55605A; --line:#E3E7E4; --soft:#F4F6F5; --link:#1E5C3A;
+  --night:#07100B; --night2:#0C1A12; --green:#1E5C3A; --green2:#3C9A63; --cream:#EFE3C3; --gold:#E8C170;
+  --pink:#F2A7D8; --cyan:#8FE3FF; --violet:#B48CFF; --magenta:#FF4FD8; --alert:#FF6B6B;
+  --display:"Instrument Serif","Noto Serif TC",Georgia,serif;
+  --body:"Noto Sans TC",-apple-system,"PingFang TC",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.8;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 96px}
+main{max-width:920px;margin:0 auto}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px))) 0 calc(-1 * max(16px,env(safe-area-inset-right,0px)));
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--paper)}
+.top .in{max-width:920px;margin:0 auto;display:flex;align-items:center;gap:20px;height:52px;overflow-x:auto;white-space:nowrap}
+.top .brand{font-weight:700;font-size:15px;letter-spacing:.02em;flex:none}
+.top nav{display:flex;gap:16px}
+.top nav a{color:var(--ink2);text-decoration:none;font-size:14px}
+.top nav a:hover{color:var(--ink)}
+header{padding:56px 0 32px}
+h1{font-family:var(--display);font-weight:500;font-size:clamp(40px,6vw,64px);line-height:1.05;margin:0 0 14px;letter-spacing:-.01em;text-wrap:balance}
+.lede{font-size:17px;max-width:40em;margin:0;color:var(--ink2)}
+.entry{border:1px solid var(--line);border-radius:12px;padding:16px 20px;margin:28px 0 0;background:var(--soft);font-size:15px}
+section{padding:48px 0;border-top:1px solid var(--line)}
+h2{font-family:var(--display);font-weight:500;font-size:34px;line-height:1.1;margin:0 0 8px}
+.sub{color:var(--ink2);margin:0 0 24px;max-width:40em}
+h3{font-size:16px;font-weight:700;margin:28px 0 10px}
+p{margin:0 0 12px;max-width:42em}
+ul{margin:0 0 12px;padding-left:1.2em;max-width:42em}
+li{margin:0 0 6px}
+code{font-family:var(--mono);font-size:.88em;background:var(--soft);padding:1px 6px;border-radius:4px}
+.stage{position:relative;background:var(--night);border-radius:14px;overflow:hidden;width:100%;aspect-ratio:16/10;max-width:100%}
+.stage canvas{display:block;width:100%;height:100%}
+.stage .ov{position:absolute;inset:0;pointer-events:none}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 0;align-items:center}
+.btn{font:inherit;font-size:14px;font-weight:500;min-height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--ink);background:var(--ink);color:#fff;cursor:pointer}
+.btn.sec{background:#fff;color:var(--ink)}
+.btn:focus-visible{outline:3px solid var(--green2);outline-offset:2px}
+.btn[disabled]{opacity:.4;cursor:default}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{font:inherit;font-size:14px;min-height:44px;padding:0 16px;border:0;background:#fff;color:var(--ink2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.seg button:focus-visible{outline:3px solid var(--green2);outline-offset:-3px}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px 24px;margin:18px 0 0}
+.sl label{display:flex;justify-content:space-between;font-size:14px;margin-bottom:4px}
+.sl label b{font-weight:500}
+.sl label code{color:var(--ink2)}
+.sl input{width:100%;accent-color:var(--green)}
+.tbl{overflow-x:auto;margin:0 0 8px}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:15px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--ink2);font-weight:500;font-size:13px}
+td.num,td.mono{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.colors{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.col{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}
+.col i{display:block;height:84px}
+.col div{padding:10px 14px;font-size:14px}
+.col b{display:block}
+.col code{display:block;background:none;padding:0;color:var(--ink2);font-size:12px}
+.col span{display:block;color:var(--ink2);font-size:13px;line-height:1.5;margin-top:4px}
+.type{border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:0 0 18px}
+.type .row{display:grid;grid-template-columns:150px 1fr;gap:16px;padding:16px 18px;border-top:1px solid var(--line);align-items:baseline}
+.type .row:first-child{border-top:0}
+.type .meta{font-size:13px;color:var(--ink2);line-height:1.5}
+.type .meta code{background:none;padding:0;font-size:12px}
+.t-display{font-family:var(--display);font-size:52px;line-height:1.05;font-weight:500}
+.t-display .zh{font-family:"Noto Serif TC",serif;font-weight:700}
+.t-h{font-family:var(--display);font-size:30px;line-height:1.2;font-weight:500}
+.t-body{font-size:16px;line-height:1.8}
+.t-small{font-size:13px;line-height:1.5;font-weight:500}
+.t-hud{font-family:var(--mono);font-size:12px;line-height:1.6;letter-spacing:.04em;font-weight:500}
+.greet{position:absolute;left:0;right:0;top:26%;text-align:center;pointer-events:none}
+.greet .w{display:inline-block;background-size:220% 100%;background-position:50% 0;font-family:var(--display);font-size:clamp(34px,7vw,64px);line-height:1.05;font-weight:500;white-space:nowrap;
+  background:linear-gradient(100deg,var(--cream) 0%,var(--pink) 40%,var(--cyan) 70%,var(--cream) 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(242,167,216,.35))}
+.greet .w[lang="zh-Hant"]{font-family:"Noto Serif TC",serif;font-weight:700;letter-spacing:.06em}
+.greet .w span{display:inline-block;white-space:pre}
+.greet .sub{display:block;margin-top:10px;font-family:var(--mono);font-size:12px;color:var(--cream);opacity:.7;letter-spacing:.08em}
+.hud{position:absolute;inset:0;pointer-events:none;font-family:var(--mono);font-size:12px;letter-spacing:.04em;color:var(--cyan)}
+.hud .lab{position:absolute;white-space:nowrap;opacity:0;color:var(--magenta)}
+.hud .box{position:absolute;border:1px solid var(--alert);opacity:0}
+.hud .dash{position:absolute;border-top:1px dashed rgba(143,227,255,.5);transform-origin:0 0;opacity:0}
+.hud .txt{position:absolute;left:5%;bottom:8%;color:var(--cream);line-height:1.7;white-space:pre-wrap;max-width:90%}
+.face{position:absolute;width:120px;height:140px;border:1px dashed rgba(239,227,195,.45);border-radius:50%;transform:translate(-50%,-50%);
+  color:var(--cream);font-size:12px;display:grid;place-items:center;pointer-events:none;opacity:.9}
+.lbl{position:absolute;transform:translate(-50%,0);font-family:var(--mono);font-size:10px;letter-spacing:.12em;color:rgba(239,227,195,.75);white-space:nowrap}
+.frame{position:absolute;inset:14px;pointer-events:none}
+.frame i{position:absolute;width:18px;height:18px;border:1.5px solid rgba(239,227,195,.8)}
+.frame i:nth-child(1){left:0;top:0;border-right:0;border-bottom:0}
+.frame i:nth-child(2){right:0;top:0;border-left:0;border-bottom:0}
+.frame i:nth-child(3){left:0;bottom:0;border-right:0;border-top:0}
+.frame i:nth-child(4){right:0;bottom:0;border-left:0;border-top:0}
+.frame .info{position:absolute;right:26px;bottom:4px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:rgba(239,227,195,.75)}
+.frame .info.l{right:auto;left:26px}
+.phone{width:min(360px,100%);aspect-ratio:9/16;margin:0 auto;background:var(--night);border-radius:28px;overflow:hidden;position:relative;border:6px solid #1b211d}
+.phone canvas{display:block;width:100%;height:100%}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px}
+.two>div{min-width:0}
+.leica{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.leica canvas{width:100%;height:auto;border-radius:10px;display:block;max-width:100%}
+.leica .cap{font-size:13px;color:var(--ink2);margin-top:6px}
+.dark{background:var(--night);border-radius:14px;padding:22px;color:var(--cream)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{font:inherit;font-size:14px;min-height:44px;padding:0 16px;border-radius:999px;border:1px solid rgba(239,227,195,.25);background:rgba(239,227,195,.06);color:var(--cream);cursor:pointer;backdrop-filter:blur(12px);transition:all .3s}
+.chip[data-s="detect"]{border-color:var(--gold);color:var(--gold)}
+.chip[data-s="on"]{border-color:var(--cyan);background:rgba(143,227,255,.14);color:#fff;box-shadow:0 0 18px rgba(143,227,255,.35)}
+.chip:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.lang{display:inline-flex;border:1px solid rgba(239,227,195,.25);border-radius:999px;overflow:hidden;backdrop-filter:blur(12px)}
+.lang button{font:inherit;font-size:14px;min-height:44px;padding:0 18px;border:0;background:transparent;color:rgba(239,227,195,.7);cursor:pointer}
+.lang button[aria-pressed="true"]{background:rgba(239,227,195,.14);color:#fff}
+.lang.light{border-color:var(--line);backdrop-filter:none}
+.lang.light button{color:var(--ink2)}
+.lang.light button[aria-pressed="true"]{background:var(--ink);color:#fff}
+.lang button:focus-visible{outline:3px solid var(--cyan);outline-offset:-3px}
+.bar{display:flex;gap:10px;justify-content:center;padding:12px;border-radius:16px;background:rgba(239,227,195,.06);border:1px solid rgba(239,227,195,.14);backdrop-filter:blur(12px)}
+.bar button{font:inherit;font-size:14px;font-weight:500;min-height:48px;padding:0 20px;border-radius:12px;border:1px solid rgba(239,227,195,.3);background:transparent;color:var(--cream);cursor:pointer}
+.bar button.pri{background:var(--cream);color:var(--night);border-color:var(--cream)}
+.bar button:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+.toast{position:absolute;left:50%;bottom:18px;transform:translate(-50%,8px);background:rgba(239,227,195,.14);border:1px solid rgba(239,227,195,.3);color:#fff;padding:8px 14px;border-radius:10px;font-size:13px;opacity:0;transition:all .3s;pointer-events:none;backdrop-filter:blur(12px)}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.states{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.state{background:var(--night);border-radius:16px;min-height:300px;position:relative;color:var(--cream);display:grid;place-items:center;text-align:center;padding:24px;overflow:hidden}
+.state h4{font-family:var(--display);font-size:26px;font-weight:500;margin:0 0 8px;line-height:1.15}
+.state p{font-size:14px;color:rgba(239,227,195,.75);margin:0 0 16px;max-width:24em}
+.state .ring{width:48px;height:48px;border-radius:50%;border:2px solid rgba(239,227,195,.2);border-top-color:var(--cream);animation:spin 1s linear infinite;margin:0 auto 16px}
+.state .err{color:var(--alert)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.anim{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.anim .row{display:grid;grid-template-columns:150px 1fr 110px;gap:16px;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.anim .row:first-child{border-top:0}
+.anim b{display:block;font-size:15px}
+.anim small{display:block;color:var(--ink2);font-size:12px;font-family:var(--mono)}
+.anim canvas{width:100%;height:64px;display:block;max-width:100%}
+.spec{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.spec div{border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:14px;min-width:0}
+.spec b{display:block}
+.spec code{display:block;background:none;padding:0;color:var(--ink2);font-size:12px;margin-top:2px}
+.note{font-size:13px;color:var(--ink2)}
+@media (max-width:640px){.type .row{grid-template-columns:1fr}.anim .row{grid-template-columns:1fr;gap:8px}.leica{grid-template-columns:1fr}.t-display{font-size:40px}}
+@media (prefers-reduced-motion:reduce){.state .ring{animation:none}}
+</style>
+
+<div class="top"><div class="in"><span class="brand">Design System</span>
+<nav><a href="#tree">樹</a><a href="#color">色彩</a><a href="#type">字體</a><a href="#material">材質</a><a href="#deco">點綴</a><a href="#leica">人像濾鏡</a><a href="#butterfly">光蝴蝶</a><a href="#text">文字</a><a href="#comp">元件</a><a href="#motion">動畫</a><a href="#screens">畫面</a></nav></div></div>
+
+<main>
+<header>
+  <h1>聖誕樹互動</h1>
+  <p class="lede">用手點亮的聖誕樹。白紙上是規則，深色舞台裡是真的 WebGL，每個按鈕與滑桿都會動。</p>
+  <div class="entry"><a href="https://claude.ai/artifact/GFDiyz1VN62pUDp93cdFo8" target="_blank" rel="noopener" style="color:var(--link);font-weight:700">互動原型</a>：八個手勢、流程狀態、設定與說明，手是模擬的 21 個關鍵點。</div>
+</header>
+
+<section id="tree">
+  <h2>樹</h2>
+  <p class="sub">六萬個點是一個會變形的身體。樹、祝福文字、星系、星都是同一批點，手勢只是叫它們去哪裡。位置吸附在像素格上，亮度用 4×4 Bayer 抖動決定留不留；點亮後 2% 的點變成 ASCII 飾品，地板是抖動鏡面，背景是全息箔，每 12 秒一道掃描帶掃過。拖曳可以轉。</p>
+  <div class="stage" id="stTree"><canvas></canvas></div>
+  <div class="ctl">
+    <div class="seg" id="segForm" role="group" aria-label="形態"><button aria-pressed="true" data-k="tree">樹</button><button aria-pressed="false" data-k="text">祝福</button><button aria-pressed="false" data-k="galaxy">星系</button></div>
+    <div class="lang light" id="langTree"><button aria-pressed="true" data-l="en">英文</button><button aria-pressed="false" data-l="zh">中文</button><button aria-pressed="false" data-l="tr">土耳其文</button></div>
+    <button class="btn" id="bGrow">長出來</button>
+    <button class="btn" id="bLight">點燈</button>
+    <button class="btn sec" id="bOff">熄燈收樹</button>
+  </div>
+  <div class="spec" style="margin-top:18px">
+    <div><b>樹</b><code>手勢：張開手掌點燈、握拳收成星</code>六萬個點，九層枝，正面亮背面暗，每層枝下有陰影。</div>
+    <div><b>祝福</b><code>手勢：比愛心</code>整棵樹散開再聚成 Merry Christmas、聖誕快樂、Mutlu Noeller，顏色是全息漸層。揮手換語言。</div>
+    <div><b>星系</b><code>手勢：雙手拉開</code>點變成兩臂螺旋星系，內圈轉得快、外圈慢，米白核心到紫青邊緣。</div>
+    <div><b>變形</b><code>1400 ms，每個點延遲 0 到 400 ms</code>點不是直線飛過去，中途會繞著樹心轉一圈，像被風捲起。</div>
+  </div>
+  <div class="sliders">
+    <div class="sl"><label><b>像素格</b><code>--grid: <span id="vGrid">3</span>px</code></label><input type="range" id="sGrid" min="2" max="6" step="1" value="3"></div>
+    <div class="sl"><label><b>顆粒</b><code>--grain: <span id="vGrain">0.09</span></code></label><input type="range" id="sGrain" min="0" max="0.4" step="0.01" value="0.09"></div>
+    <div class="sl"><label><b>光暈</b><code>--bloom: <span id="vBloom">0.9</span></code></label><input type="range" id="sBloom" min="0" max="2" step="0.05" value="0.9"></div>
+    <div class="sl"><label><b>色散</b><code>--ca: <span id="vCA">2</span>px</code></label><input type="range" id="sCA" min="0" max="5" step="0.5" value="2"></div>
+    <div class="sl"><label><b>抖動</b><code>--dither: <span id="vDither">1</span></code></label><input type="range" id="sDither" min="0" max="1" step="1" value="1"></div>
+  </div>
+</section>
+
+<section id="color">
+  <h2>色彩</h2>
+  <p class="sub">每個顏色只做一件事。產品永遠是夜底，白色只在這份文件裡。</p>
+  <div class="colors">
+    <div class="col"><i style="background:#07100B"></i><div><b>夜底</b><code>#07100B</code><span>整個畫面的底，也是鏡頭畫面暗部的目標色。</span></div></div>
+    <div class="col"><i style="background:#1E5C3A"></i><div><b>樹綠</b><code>#1E5C3A</code><span>樹的內層點、背景光暈的中心。</span></div></div>
+    <div class="col"><i style="background:#3C9A63"></i><div><b>亮綠</b><code>#3C9A63</code><span>樹的外層點、就緒狀態。</span></div></div>
+    <div class="col"><i style="background:#EFE3C3"></i><div><b>米白</b><code>#EFE3C3</code><span>樹的高光點、所有文字、取景框。</span></div></div>
+    <div class="col"><i style="background:#E8C170"></i><div><b>星金</b><code>#E8C170</code><span>樹頂的星、四成的燈、指尖光軌、偵測中狀態。</span></div></div>
+    <div class="col"><i style="background:#F2A7D8"></i><div><b>全息粉</b><code>#F2A7D8</code><span>光球、祝福漸層的中段、愛心時的樹燈。</span></div></div>
+    <div class="col"><i style="background:#8FE3FF"></i><div><b>全息青</b><code>#8FE3FF</code><span>光球、祝福漸層的尾段、HUD 文字、成立狀態。</span></div></div>
+    <div class="col"><i style="background:#B48CFF"></i><div><b>光鏈紫</b><code>#B48CFF</code><span>只給邊緣的光點鏈。</span></div></div>
+    <div class="col"><i style="background:#FF4FD8"></i><div><b>蝶桃紅</b><code>#FF4FD8</code><span>蝴蝶的左翅與 HUD 座標。</span></div></div>
+    <div class="col"><i style="background:#FF6B6B"></i><div><b>警示紅</b><code>#FF6B6B</code><span>HUD 追蹤框、錯誤訊息。</span></div></div>
+    <div class="col"><i style="background:#141A16"></i><div><b>墨</b><code>#141A16</code><span>這份文件的文字與按鈕。</span></div></div>
+    <div class="col"><i style="background:#E3E7E4"></i><div><b>線</b><code>#E3E7E4</code><span>這份文件的分隔線與邊框。</span></div></div>
+  </div>
+</section>
+
+<section id="type">
+  <h2>字體</h2>
+  <p class="sub">一組襯線做大字，一組無襯線做內文，一組等寬做 HUD。三種語言都用同一套。</p>
+  <div class="type">
+    <div class="row"><div class="meta">顯示大字<br><code>Instrument Serif 500 / Noto Serif TC 700</code><br><code>52px · 1.05 · 字距 -0.01em（中文 +0.06em）</code></div><div class="t-display">Merry Christmas <span class="zh">聖誕快樂</span> <span lang="tr">Mutlu Noeller</span></div></div>
+    <div class="row"><div class="meta">標題<br><code>Instrument Serif 500 / Noto Serif TC 700</code><br><code>30px · 1.2</code></div><div class="t-h">雙手交疊，蝴蝶就會飛出來</div></div>
+    <div class="row"><div class="meta">內文<br><code>Noto Sans TC 400</code><br><code>16px · 1.8 · 一行不超過 40 個中文字</code></div><div class="t-body">把手掌張開對著鏡頭，星光會從掌心飛到樹上。握拳就熄燈，樹會收成一顆星。</div></div>
+    <div class="row"><div class="meta">小字<br><code>Noto Sans TC 500</code><br><code>13px · 1.5</code></div><div class="t-small">偵測中，請把手放進畫面</div></div>
+    <div class="row"><div class="meta">HUD<br><code>IBM Plex Mono 500</code><br><code>12px · 1.6 · 字距 0.04em</code></div><div class="t-hud">x: 227  y: 606    0x4C4F5645    23:59    12.25</div></div>
+  </div>
+  <ul>
+    <li>土耳其文的元素一律加 <code>lang="tr"</code>，瀏覽器才會把 i 正確轉成 İ，ı 保持無點。</li>
+    <li>祝福大字只有三種字串：Merry Christmas、聖誕快樂、Mutlu Noeller。不縮寫，不換行。</li>
+    <li>中文內文行高 1.8，中文標題 1.2；英文與土耳其文同值，不另調。</li>
+    <li>數字一律 <code>tabular-nums</code>，HUD 的座標兩個空格分隔。</li>
+  </ul>
+</section>
+
+<section id="material">
+  <h2>材質</h2>
+  <p class="sub">五種質感，全部在最後一層 shader 裡做，上面「樹」的滑桿就是這些 token。</p>
+  <div class="spec">
+    <div><b>像素格</b><code>--grid: 3px（手機 2px）</code>樹與蝴蝶的點吸附在這個格子上，點的邊長是格子的 92%。</div>
+    <div><b>抖動</b><code>--dither: Bayer 4×4</code>以格子為單位比較亮度與門檻，暗的點不畫，密度就變成明暗。</div>
+    <div><b>顆粒</b><code>--grain: 0.09</code>每一幀換圖的雜訊，暗部強、亮部弱到三成。</div>
+    <div><b>光暈</b><code>--bloom: 0.9 / 半徑 0.4 / 門檻 0.8</code>只有亮度超過門檻的東西會暈：燈、星、蝴蝶、祝福。人像永遠在門檻下。</div>
+    <div><b>色散</b><code>--ca: 2px（畫面邊緣 4px）</code>紅藍通道沿半徑方向錯開，中心幾乎沒有，邊緣最大。</div>
+    <div><b>暗角</b><code>--vignette: 0.55</code>從半徑 0.45 開始變暗，到角落剩 45% 亮度。</div>
+    <div><b>玻璃</b><code>rgba(239,227,195,.06) + blur 12px + 邊線 .25</code>所有浮在畫面上的控制項都是這塊玻璃。</div>
+    <div><b>圓角與尺寸</b><code>控制 10 / 面板 16 / 膠囊 999 / 觸控 44px</code>間距用 4 的倍數：4 8 12 16 24 40 64。</div>
+    <div><b>鏡面地板</b><code>反射 0.42 · 深度 1.4 內淡出 · 水波 0.014</code>樹的點反射到地板下，抖動更稀，有一點水波。祝福與星系不反射。</div>
+    <div><b>全息箔背景</b><code>亮度 0.03 到 0.06 · fbm 4 層 · 漂 0.02/s</code>很暗的彩虹噪聲，像黑暗裡的箔紙；偶爾有直的光柱。</div>
+    <div><b>掃描帶</b><code>每 11.8 s 一道 · 高 7% · 色散 ×4 · 抖 4px</code>CRT 刷新的感覺，掃過的地方亮 0.045。</div>
+    <div><b>數位雪</b><code>520 個字元 · 三層深度 · 近大遠小</code>落下的不是雪花，是 · + × ✧ 0 1。近的大而淡，遠的小而清楚。</div>
+    <div><b>ASCII 飾品</b><code>420 顆 · ✦ ❄ ◇ ✿ ✶ ✧ ❋ ○ · 10 到 17px</code>點燈時樹表層的點彈出成字元，星金、全息粉、全息青。</div>
+    <div><b>星的光漏</b><code>橫 2.6 · 直 1.1 · 青到粉</code>點燈後樹頂的星拉出一道變形鏡頭的光漏。</div>
+  </div>
+</section>
+
+<section id="deco">
+  <h2>點綴</h2>
+  <p class="sub">三種跟樹完全不同的東西，只在鏡頭畫面裡飄。虛線圈是臉的禁區，在舞台上移動滑鼠或手指就是臉的位置，光球會被推開。</p>
+  <div class="stage" id="stDeco"><canvas></canvas><div class="ov"><div class="face" id="face">臉</div></div></div>
+  <div class="ctl">
+    <div class="seg" role="group" aria-label="點綴種類">
+      <button aria-pressed="true" data-k="orb">光球</button>
+      <button aria-pressed="true" data-k="streak">光痕</button>
+      <button aria-pressed="true" data-k="chain">光點鏈</button>
+    </div>
+    <div class="lang light" id="langDeco"><button aria-pressed="true" data-l="en">英文</button><button aria-pressed="false" data-l="zh">中文</button><button aria-pressed="false" data-l="tr">土耳其文</button></div>
+  </div>
+  <div class="spec" style="margin-top:18px">
+    <div><b>光球</b><code>3 到 5 顆 · 直徑 90 到 140px · 加法混色</code>白核、彩色內暈、彩虹邊，底下一句小字。漂流 0.15 Hz，跟手有視差。</div>
+    <div><b>光痕</b><code>12 到 16 條 · 寬 1px · 長 20 到 45% 高</code>從頂端垂下，粉青黃輪流，慢慢往下流再從上面回來。</div>
+    <div><b>光點鏈</b><code>兩側各 2 串 · 點徑 3 到 14px</code>只用光鏈紫，偶爾一顆白核。隨風擺 6 秒一輪。</div>
+    <div><b>臉的禁區</b><code>臉框 + 12% 邊距</code>進禁區的東西被沿半徑推出去，推力隨距離平滑，不彈跳。</div>
+  </div>
+</section>
+
+<section id="leica">
+  <h2>人像濾鏡</h2>
+  <p class="sub">鏡頭畫面只做這一層：亮部微暖、暗部偏青綠、對比加一成五、飽和減一成五、高光暈開、35mm 顆粒、暗角。人像不進 bloom。</p>
+  <div class="leica">
+    <div><canvas id="cvChartA" width="560" height="320"></canvas><div class="cap">原始色卡</div></div>
+    <div><canvas id="cvChartB" width="560" height="320"></canvas><div class="cap">套用濾鏡後，加取景框</div></div>
+    <div><canvas id="cvCurve" width="560" height="320"></canvas><div class="cap">三個通道的曲線</div></div>
+    <div class="spec" style="grid-template-columns:1fr">
+      <div><b>曲線</b><code>對比 1.15 · 暗部 +(−0.02, +0.01, +0.03) · 亮部 +(+0.04, +0.015, −0.03)</code></div>
+      <div><b>飽和</b><code>0.85</code></div>
+      <div><b>暈開</b><code>亮度 &gt; 0.8 的區域模糊 14px 後以 0.25 疊回</code></div>
+      <div><b>顆粒</b><code>0.10，比畫面其他地方弱</code></div>
+      <div><b>取景框</b><code>四角 18px L 形 · 米白 .8 · 下方等寬小字：光圈、快門、ISO</code></div>
+    </div>
+  </div>
+</section>
+
+<section id="butterfly">
+  <h2>光蝴蝶與 HUD</h2>
+  <p class="sub">雙手交疊時從交疊點展開。六千個點排成蝴蝶曲線，左翅桃紅、右翅全息青、身體米白。翅膀每秒拍 2.4 下。HUD 座標每 80 ms 冒一個，文字一字 40 ms。</p>
+  <div class="stage" id="stBfly"><canvas></canvas>
+    <div class="hud" id="hud">
+      <div class="lab" style="left:18%;top:22%">x: 227  y: 606</div>
+      <div class="lab" style="left:62%;top:30%">x: 467  y: 750</div>
+      <div class="lab" style="left:66%;top:64%">x: 603  y: 1182</div>
+      <div class="lab" style="left:20%;top:70%">x: 275  y: 854</div>
+      <div class="box" style="left:30%;top:28%;width:16%;height:30%"></div>
+      <div class="box" style="left:52%;top:50%;width:9%;height:16%"></div>
+      <div class="dash" style="left:46%;top:34%;width:18%;transform:rotate(24deg)"></div>
+      <div class="dash" style="left:42%;top:62%;width:16%;transform:rotate(-30deg)"></div>
+      <div class="txt" id="hudTxt"></div>
+    </div>
+  </div>
+  <div class="ctl"><button class="btn" id="bBfly">重播</button><span class="note">每次重播從 21 句裡抽三句，三種語言各一句。全部句子在下面。</span></div>
+  <div class="spec" style="margin-top:18px" id="hudPool"></div>
+</section>
+
+<section id="text">
+  <h2>文字</h2>
+  <p class="sub">祝福大字換語言時先散成點再聚回來：散 350 ms，聚 500 ms。下面的按鈕會換。</p>
+  <div class="stage" id="stText" style="aspect-ratio:16/7"><canvas></canvas>
+    <div class="greet" id="greet"><span class="w" lang="en"></span><span class="sub" id="greetSub"></span></div>
+  </div>
+  <div class="ctl"><div class="lang light" id="langText"><button aria-pressed="true" data-l="en">英文</button><button aria-pressed="false" data-l="zh">中文</button><button aria-pressed="false" data-l="tr">土耳其文</button></div></div>
+  <h3>規則</h3>
+  <ul>
+    <li>祝福大字不換行、不斷字；手機寬度放不下就等比例縮。</li>
+    <li>中文標題最多 8 個字，英文與土耳其文最多 18 個字母。</li>
+    <li>時間 <code>23:59</code>，日期 <code>12.25</code>，座標 <code>x: 227  y: 606</code>，百分比 <code>100%</code>。</li>
+    <li>狀態用詞只有六個：偵測中、就緒、成立、沒偵測到手、沒有相機、不支援。</li>
+    <li>按鈕說會發生什麼：開始、重來、截圖、允許相機。</li>
+  </ul>
+</section>
+
+<section id="comp">
+  <h2>元件</h2>
+  <p class="sub">浮在畫面上的東西都是同一塊玻璃。點一下看狀態。</p>
+  <div class="dark">
+    <h3 style="margin-top:0;color:var(--cream)">手勢提示</h3>
+    <div class="chips" id="chips">
+      <button class="chip" data-s="idle">張開手掌</button><button class="chip" data-s="idle">握拳</button><button class="chip" data-s="idle">捏合</button>
+      <button class="chip" data-s="idle">比愛心</button><button class="chip" data-s="idle">雙手交疊</button><button class="chip" data-s="idle">左右揮手</button><button class="chip" data-s="idle">食指指向</button>
+    </div>
+    <p class="note" style="color:rgba(239,227,195,.7);margin-top:10px">待機是米白線，偵測中是星金線，成立是全息青底加光暈。</p>
+    <h3 style="color:var(--cream)">語言切換</h3>
+    <div class="lang" id="langComp"><button aria-pressed="true" data-l="en">英文</button><button aria-pressed="false" data-l="zh">中文</button><button aria-pressed="false" data-l="tr">土耳其文</button></div>
+    <h3 style="color:var(--cream)">底部動作列</h3>
+    <div style="position:relative;padding-bottom:40px">
+      <div class="bar" id="bar"><button data-t="已重來">重來</button><button class="pri" data-t="已開始">開始</button><button data-t="已截圖">截圖</button></div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+  <h3>畫面狀態</h3>
+  <div class="ctl" style="margin:0 0 14px"><div class="seg" id="segState" role="group" aria-label="畫面狀態">
+    <button aria-pressed="true" data-k="perm">相機權限</button><button aria-pressed="false" data-k="load">載入</button><button aria-pressed="false" data-k="nohand">沒偵測到手</button><button aria-pressed="false" data-k="nocam">沒有相機</button><button aria-pressed="false" data-k="unsup">不支援</button></div></div>
+  <div class="states"><div class="state" id="stateBox"></div>
+    <div class="state" style="display:block;text-align:left;padding:22px">
+      <p style="max-width:none"><b style="color:var(--cream)">相機權限</b>：開場只有一句話與一顆按鈕，樹在背後暗暗長好等著。</p>
+      <p style="max-width:none"><b style="color:var(--cream)">載入</b>：手勢模型要 1 到 3 秒，轉圈用米白，不用進度數字。</p>
+      <p style="max-width:none"><b style="color:var(--cream)">沒偵測到手</b>：三秒沒手就出現，樹繼續呼吸，不熄。</p>
+      <p style="max-width:none"><b style="color:var(--cream)">沒有相機 / 不支援</b>：用警示紅，給一個能做的動作。</p>
+    </div></div>
+</section>
+
+<section id="motion">
+  <h2>動畫</h2>
+  <p class="sub">每一段的時長與曲線。按播放看真實速度，曲線上的點是進度。</p>
+  <div class="anim" id="anims"></div>
+  <h3>跟手</h3>
+  <ul>
+    <li>關鍵點先過 One Euro 濾波：<code>minCutoff 1.0 · beta 0.02</code>。</li>
+    <li>手勢連續 6 幀成立才觸發，連續 10 幀不成立才解除。</li>
+    <li>跟手的東西用彈簧 <code>k=170 d=14</code>，展開用 <code>k=170 d=16</code>（過衝 8%）。</li>
+    <li>手離開畫面，跟手的東西 400 ms 淡出；回來 300 ms 淡入。</li>
+  </ul>
+</section>
+
+<section id="screens">
+  <h2>畫面</h2>
+  <p class="sub">直式手機畫面，五個狀態、三種語言，全部是真的在跑。灰色漸層代表鏡頭畫面，上面的虛線圈是臉的禁區。祝福大字的反光會跟著手走，這裡是跟著滑鼠。</p>
+  <div class="ctl" style="margin:0 0 14px;justify-content:center">
+    <div class="seg" id="segScreen" role="group" aria-label="狀態"><button aria-pressed="true" data-k="dark">樹未點亮</button><button aria-pressed="false" data-k="lit">樹全亮</button><button aria-pressed="false" data-k="text">祝福</button><button aria-pressed="false" data-k="galaxy">星系</button><button aria-pressed="false" data-k="cross">雙手交疊</button></div>
+    <div class="lang light" id="langScreen"><button aria-pressed="true" data-l="en">英文</button><button aria-pressed="false" data-l="zh">中文</button><button aria-pressed="false" data-l="tr">土耳其文</button></div>
+  </div>
+  <div class="phone" id="stScreen"><canvas></canvas>
+    <div class="ov">
+      <div class="frame"><i></i><i></i><i></i><i></i><span class="info l">f/2.0  1/60  ISO 800</span><span class="info">12.25  23:59</span></div>
+      <div class="face" id="face2" style="left:50%;top:27%;width:150px;height:190px;border-color:rgba(239,227,195,.25);color:rgba(239,227,195,.5)">臉</div>
+      <div class="greet" id="greet2" style="top:52%"><span class="w" lang="en"></span></div>
+      <div class="hud" id="hud2" style="opacity:0;transition:opacity .4s">
+        <div class="lab" style="left:10%;top:36%;opacity:1">x: 227  y: 606</div>
+        <div class="lab" style="left:58%;top:42%;opacity:1">x: 467  y: 750</div>
+        <div class="box" style="left:36%;top:44%;width:16%;height:12%;opacity:1"></div>
+        <div class="txt" id="hudTxt2" style="bottom:14%;font-size:11px"></div>
+      </div>
+      <div class="lbl" id="hint" style="left:50%;bottom:7%">張開手掌，點燈</div>
+    </div>
+  </div>
+</section>
+</main>
+
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.186.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.186.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import { ease, tween, delay, GREET, ORB_WORDS, HUD_POOL, pickHud, HUD_LINES, C, PAL, makeStage, ndcToCss, GLYPHS, SNOWG, glyphAtlas, textPoints, FORM, makeTree, orbTexture, softDot, makeDeco, makeButterfly, playHud, setGreet, pressSeg, wireLang, wireSeg } from "./engine.js";
+
+/* ---------- 舞台 1：樹 ---------- */
+{
+  const st = makeStage(document.getElementById("stTree")); st.camera.position.set(0, 0.15, 4.8); st.post.uniforms.uScan.value = 1;
+  const T = makeTree(st); T.grow();
+  let lang = "en";
+  document.getElementById("bGrow").onclick = () => { T.setForm(FORM.tree); pressSeg("segForm", "tree"); T.grow(); };
+  document.getElementById("bLight").onclick = () => T.light();
+  document.getElementById("bOff").onclick = () => { T.setForm(FORM.tree); pressSeg("segForm", "tree"); T.collapse(); };
+  let form = "tree";
+  wireSeg(document.getElementById("segForm"), k => { form = k; T.setForm(k === "text" ? FORM[lang] : (k === "galaxy" ? FORM.galaxy : FORM.tree)); });
+  wireLang(document.getElementById("langTree"), l => { lang = l; if (form === "text") T.setForm(FORM[l]); });
+  const bind = (id, vid, fn, fmt = v => v) => { const s = document.getElementById(id); const v = document.getElementById(vid); const run = () => { v.textContent = fmt(s.value); fn(parseFloat(s.value)); }; s.addEventListener("input", run); run(); };
+  bind("sGrid", "vGrid", v => T.u.uGrid.value = v);
+  bind("sGrain", "vGrain", v => st.post.uniforms.uGrain.value = v);
+  bind("sBloom", "vBloom", v => st.bloomTarget = v);
+  bind("sCA", "vCA", v => st.post.uniforms.uCA.value = v);
+  bind("sDither", "vDither", v => T.u.uDither.value = v);
+}
+
+/* ---------- 舞台 2：點綴 ---------- */
+{
+  const host = document.getElementById("stDeco"); const st = makeStage(host, { ortho: true });
+  const D = makeDeco(st, { labels: true, zone: { x: 0, y: 0.1, r: 0.36 } });
+  const face = document.getElementById("face"); let fx = 0, fy = 0.1;
+  st.hooks.push({ update(s, dt) { const tgt = s.pointer || { x: Math.sin(s.t * 0.35) * 0.45, y: 0.1 + Math.cos(s.t * 0.27) * 0.15 }; const f = 1 - Math.exp(-dt * 5); fx += (tgt.x - fx) * f; fy += (tgt.y - fy) * f; D.zone.x = fx; D.zone.y = fy; D.zone.r = 0.36;
+    const css = ndcToCss(s, { x: fx, y: fy }); face.style.left = css.x + "px"; face.style.top = css.y + "px"; face.style.width = (0.36 * s.h * 0.86) + "px"; face.style.height = (0.36 * s.h) + "px"; } });
+  host.parentElement.querySelectorAll(".seg button").forEach(b => b.addEventListener("click", () => { const on = b.getAttribute("aria-pressed") !== "true"; b.setAttribute("aria-pressed", on); D.on[b.dataset.k] = on; }));
+  wireLang(document.getElementById("langDeco"), l => D.lang = l);
+}
+
+/* ---------- 舞台 3：光蝴蝶 ---------- */
+{
+  const host = document.getElementById("stBfly"); const st = makeStage(host, { ortho: true }); st.bloomTarget = 1.1; st.post.uniforms.uCA.value = 3;
+  const B = makeButterfly(st, { scale: 0.26 });
+  const hud = document.getElementById("hud"), txt = document.getElementById("hudTxt");
+  let run = 0; const play = async () => { const id = ++run; B.show(); await delay(200); if (id !== run) return; playHud(hud, txt); await delay(6500); if (id !== run) return; B.dissolve(); };
+  document.getElementById("bBfly").onclick = play;
+  new IntersectionObserver(([e]) => { if (e.isIntersecting && !run) play(); }, { threshold: 0.3 }).observe(host);
+}
+
+/* ---------- 雙手交疊的文字：全部列出 ---------- */
+{ const w = document.getElementById("hudPool"); [["中文", "zh"], ["英文", "en"], ["土耳其文", "tr"]].forEach(([n, l]) => { const d = document.createElement("div"); d.innerHTML = `<b>${n}</b>` + HUD_POOL[l].map(t => `<code>${t.replace(/</g, "&lt;")}</code>`).join(""); if (l === "tr") d.setAttribute("lang", "tr"); w.appendChild(d); }); }
+
+/* ---------- 舞台 4：文字 ---------- */
+{
+  const host = document.getElementById("stText"); const st = makeStage(host, { ortho: true }); st.bloomTarget = 0.6;
+  const D = makeDeco(st, { labels: false, zone: { x: 0, y: 0, r: 0.42 }, orbs: 3, streaks: 8 });
+  const g = document.getElementById("greet"); setGreet(g, "en", false); document.getElementById("greetSub").textContent = "12.25  23:59";
+  st.hooks.push({ update(s) { const w = g.querySelector(".w"); const x = s.pointer ? s.pointer.x : Math.sin(s.t * 0.7) * 0.6; w.style.backgroundPosition = `${50 + x * 45}% 0`; } });
+  wireLang(document.getElementById("langText"), l => setGreet(g, l));
+}
+
+/* ---------- 元件 ---------- */
+{
+  const chips = document.getElementById("chips"); const order = ["idle", "detect", "on"];
+  chips.querySelectorAll(".chip").forEach(c => c.addEventListener("click", () => { c.dataset.s = order[(order.indexOf(c.dataset.s) + 1) % 3]; }));
+  wireLang(document.getElementById("langComp"), l => { setGreet(document.getElementById("greet"), l); document.querySelectorAll("#langText button").forEach(x => x.setAttribute("aria-pressed", x.dataset.l === l)); });
+  const toast = document.getElementById("toast"); let tt;
+  document.querySelectorAll("#bar button").forEach(b => b.addEventListener("click", () => { toast.textContent = b.dataset.t; toast.classList.add("show"); clearTimeout(tt); tt = setTimeout(() => toast.classList.remove("show"), 1600); }));
+  const box = document.getElementById("stateBox");
+  const views = {
+    perm: `<div><h4>讓樹看到妳的手</h4><p>影像只在這支手機裡處理，不會上傳。</p><button class="btn" style="background:#EFE3C3;color:#07100B;border-color:#EFE3C3">允許相機</button></div>`,
+    load: `<div><div class="ring"></div><p>正在載入手勢模型</p></div>`,
+    nohand: `<div><h4>沒偵測到手</h4><p>把手放進畫面，離鏡頭一個手臂的距離。</p></div>`,
+    nocam: `<div><h4 class="err">沒有相機</h4><p>這個裝置沒有可用的相機。換一支有前鏡頭的手機再開。</p><button class="btn" style="background:transparent;color:#EFE3C3;border-color:rgba(239,227,195,.4)">只看樹</button></div>`,
+    unsup: `<div><h4 class="err">不支援</h4><p>這個瀏覽器跑不動 WebGL。用 Safari 或 Chrome 開。</p><button class="btn" style="background:transparent;color:#EFE3C3;border-color:rgba(239,227,195,.4)">複製連結</button></div>`,
+  };
+  const show = k => box.innerHTML = views[k]; show("perm"); wireSeg(document.getElementById("segState"), show);
+}
+
+/* ---------- 人像濾鏡 ---------- */
+{
+  const A = document.getElementById("cvChartA"), Bc = document.getElementById("cvChartB"), Cc = document.getElementById("cvCurve");
+  const patches = ["#735244", "#c29682", "#627a9d", "#576c43", "#8580b1", "#67bdaa", "#d67e2c", "#505ba6", "#c15a63", "#5e3c6c", "#9dbc40", "#e0a32e", "#383d96", "#469449", "#af363c", "#e7c71f", "#bb5695", "#0885a1", "#f3f3f2", "#c8c8c8", "#a0a0a0", "#7a7a79", "#555555", "#343434"];
+  const draw = (cv) => { const x = cv.getContext("2d"); x.fillStyle = "#1a1d1b"; x.fillRect(0, 0, 560, 320); patches.forEach((c, i) => { const col = i % 6, row = Math.floor(i / 6); x.fillStyle = c; x.fillRect(16 + col * 90, 16 + row * 74, 80, 64); }); };
+  draw(A); draw(Bc);
+  const curve = (v, ch) => { let y = 0.5 + (v - 0.5) * 1.15; const sh = [-0.02, 0.01, 0.03][ch], hi = [0.04, 0.015, -0.03][ch]; y += sh * (1 - v) * (1 - v) * 2 + hi * v * v * 2; return Math.min(1, Math.max(0, y)); };
+  const x = Bc.getContext("2d"); const im = x.getImageData(0, 0, 560, 320); const d = im.data;
+  for (let i = 0; i < d.length; i += 4) { let r = curve(d[i] / 255, 0), g = curve(d[i + 1] / 255, 1), b = curve(d[i + 2] / 255, 2); const l = 0.299 * r + 0.587 * g + 0.114 * b; r = l + (r - l) * 0.85; g = l + (g - l) * 0.85; b = l + (b - l) * 0.85;
+    const px = (i / 4) % 560, py = Math.floor(i / 4 / 560); const vr = Math.hypot((px - 280) / 280, (py - 160) / 160); const vig = 1 - 0.45 * Math.max(0, Math.min(1, (vr - 0.55) / 0.7)); const n = (Math.random() - 0.5) * 0.10 * (1 - l * 0.7);
+    d[i] = Math.max(0, Math.min(255, (r * vig + n) * 255)); d[i + 1] = Math.max(0, Math.min(255, (g * vig + n) * 255)); d[i + 2] = Math.max(0, Math.min(255, (b * vig + n) * 255)); }
+  x.putImageData(im, 0, 0);
+  // 暈開：亮部模糊疊回
+  const hb = document.createElement("canvas"); hb.width = 560; hb.height = 320; const hx = hb.getContext("2d"); hx.drawImage(Bc, 0, 0); const hi = hx.getImageData(0, 0, 560, 320); for (let i = 0; i < hi.data.length; i += 4) { const l = (hi.data[i] * 0.299 + hi.data[i + 1] * 0.587 + hi.data[i + 2] * 0.114) / 255; const k = l > 0.8 ? 1 : 0; hi.data[i] *= k; hi.data[i + 1] *= k; hi.data[i + 2] *= k; } hx.putImageData(hi, 0, 0);
+  x.save(); x.filter = "blur(14px)"; x.globalAlpha = 0.25; x.globalCompositeOperation = "lighter"; x.drawImage(hb, 0, 0); x.restore();
+  // 取景框
+  x.strokeStyle = "rgba(239,227,195,.85)"; x.lineWidth = 1.5; const L = 18, m = 14; [[m, m, 1, 1], [560 - m, m, -1, 1], [m, 320 - m, 1, -1], [560 - m, 320 - m, -1, -1]].forEach(([cx, cy, sx, sy]) => { x.beginPath(); x.moveTo(cx, cy + sy * L); x.lineTo(cx, cy); x.lineTo(cx + sx * L, cy); x.stroke(); });
+  x.fillStyle = "rgba(239,227,195,.8)"; x.font = "500 10px 'IBM Plex Mono', monospace"; x.textAlign = "right"; x.fillText("f/2.0  1/60  ISO 800", 560 - m - 24, 320 - m + 2);
+  // 曲線
+  const c = Cc.getContext("2d"); c.fillStyle = "#fff"; c.fillRect(0, 0, 560, 320); c.strokeStyle = "#E3E7E4"; c.lineWidth = 1; for (let i = 0; i <= 4; i++) { c.beginPath(); c.moveTo(40 + i * 120, 20); c.lineTo(40 + i * 120, 300); c.stroke(); c.beginPath(); c.moveTo(40, 20 + i * 70); c.lineTo(520, 20 + i * 70); c.stroke(); }
+  c.strokeStyle = "#9aa39d"; c.setLineDash([4, 4]); c.beginPath(); c.moveTo(40, 300); c.lineTo(520, 20); c.stroke(); c.setLineDash([]);
+  ["#d14a4a", "#3C9A63", "#3b6fd1"].forEach((col, ch) => { c.strokeStyle = col; c.lineWidth = 2; c.beginPath(); for (let i = 0; i <= 100; i++) { const v = i / 100, y = curve(v, ch); const X = 40 + v * 480, Y = 300 - y * 280; i ? c.lineTo(X, Y) : c.moveTo(X, Y); } c.stroke(); });
+  c.fillStyle = "#55605A"; c.font = "12px 'IBM Plex Mono', monospace"; c.fillText("輸入 0", 40, 316); c.textAlign = "right"; c.fillText("1", 520, 316);
+}
+
+/* ---------- 動畫列表 ---------- */
+{
+  const spring = (k, d) => { const out = []; let x = 0, v = 0; const h = 1 / 240; for (let i = 0; i <= 240; i++) { out.push(x); for (let s = 0; s < 4; s++) { v += (-k * (x - 1) - d * v) * h / 4; x += v * h / 4; } } return t => out[Math.min(240, Math.round(t * 240))]; };
+  const rows = [
+    ["樹長出來", 3200, "ease-out expo", ease.outExpo],
+    ["靜止呼吸", 6000, "正弦，一輪", ease.sine],
+    ["點燈", 1800, "ease-out cubic", ease.outCubic],
+    ["熄燈收樹", 900, "ease-in quart", ease.inQuart],
+    ["掛上裝飾", 1000, "彈簧 k=170 d=14", spring(170, 14)],
+    ["三語祝福", 850, "散 350 ease-in，聚 500 ease-out expo", t => t < 350 / 850 ? 1 - (t / (350 / 850)) * (t / (350 / 850)) * 0.5 : 0.5 + 0.5 * ease.outExpo((t - 350 / 850) / (500 / 850))],
+    ["光蝴蝶展開", 1000, "彈簧 k=170 d=16", spring(170, 16)],
+    ["蝴蝶散掉", 900, "ease-out cubic", ease.outCubic],
+    ["指尖光軌", 1200, "線性衰減", t => 1 - t],
+    ["變形", 1400, "每點延遲 0 到 400 ms，S 曲線", t => { const m = Math.min(1, Math.max(0, t * 1.4 - 0.2)); return m * m * (3 - 2 * m); }],
+    ["飾品彈出", 600, "lit × (1 + 0.4 sin πt)", t => { const l = ease.outCubic(t); return l * (1 + 0.4 * Math.sin(l * Math.PI)); }],
+    ["掃描帶", 11800, "線性，一道 7% 高", t => Math.max(0, 1 - Math.abs(t - 0.5) * 12)],
+  ];
+  const wrap = document.getElementById("anims");
+  rows.forEach(([name, dur, label, fn]) => {
+    const row = document.createElement("div"); row.className = "row";
+    row.innerHTML = `<div><b>${name}</b><small>${dur} ms</small><small>${label}</small></div><canvas width="600" height="128"></canvas><button class="btn sec" type="button">播放</button>`;
+    wrap.appendChild(row); const cv = row.querySelector("canvas"), c = cv.getContext("2d"); let maxV = 1; for (let i = 0; i <= 100; i++) maxV = Math.max(maxV, fn(i / 100));
+    const draw = (p) => { c.clearRect(0, 0, 600, 128); c.strokeStyle = "#E3E7E4"; c.lineWidth = 2; c.beginPath(); c.moveTo(20, 108); c.lineTo(580, 108); c.stroke();
+      c.strokeStyle = "#1E5C3A"; c.lineWidth = 3; c.beginPath(); for (let i = 0; i <= 200; i++) { const t = i / 200, X = 20 + t * 560, Y = 108 - (fn(t) / maxV) * 88; i ? c.lineTo(X, Y) : c.moveTo(X, Y); } c.stroke();
+      if (p != null) { const X = 20 + p * 560, Y = 108 - (fn(p) / maxV) * 88; c.fillStyle = "#E8C170"; c.beginPath(); c.arc(X, Y, 7, 0, 6.28); c.fill(); c.fillStyle = "#141A16"; c.fillRect(20, 118, p * 560, 4); } };
+    draw(null);
+    row.querySelector("button").addEventListener("click", () => { const t0 = performance.now(); const step = () => { const p = Math.min(1, (performance.now() - t0) / dur); draw(p); if (p < 1) requestAnimationFrame(step); else setTimeout(() => draw(null), 400); }; step(); });
+  });
+}
+
+/* ---------- 舞台 5：畫面 ---------- */
+{
+  const host = document.getElementById("stScreen"); const st = makeStage(host, { fov: 40, z: 4.4 }); st.camera.position.set(0, -0.35, 4.4); st.post.uniforms.uGrain.value = 0.08; st.post.uniforms.uScan.value = 1;
+  // 鏡頭畫面（灰色漸層）
+  const cam = new THREE.Mesh(new THREE.PlaneGeometry(14, 24), new THREE.ShaderMaterial({ depthWrite: false, depthTest: false, uniforms: { uTime: { value: 0 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }`,
+    fragmentShader: `varying vec2 vUv; uniform float uTime; float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+      void main(){ vec2 p=vUv-vec2(0.5,0.62); float d=length(p*vec2(1.2,1.)); vec3 a=vec3(0.030,0.028,0.026), b=vec3(0.006,0.009,0.007); vec3 col=mix(a,b,smoothstep(0.05,0.55,d)); col+=(h(floor(vUv*300.)+fract(uTime))-0.5)*0.03; gl_FragColor=vec4(col,1.); }` }));
+  cam.position.z = -3; cam.renderOrder = -1; st.scene.add(cam);
+  st.hooks.push({ update(s) { cam.material.uniforms.uTime.value = s.t; } });
+  const T = makeTree(st, { count: 45000, y0: -1.55, height: 2.1, textWidth: 1.55, galaxyR: 1.0, twoLine: true }); T.u.uGrid.value = 2; T.glow.material.uniforms.uDim.value = 0.6; T.grow();
+  const D = makeDeco(st, { labels: false, zone: { x: 0, y: 0.47, r: 0.3 }, orbs: 4, streaks: 10, zDepth: 1.2, orbScale: 0.7, sides: true, region: { x0: -0.8, x1: 0.8, y0: 0.3, y1: 0.9 } });
+  const B = makeButterfly(st, { scale: 0.2, pos: [0, -0.3, 1.4] });
+  const greet = document.getElementById("greet2"), hud = document.getElementById("hud2"), txt = document.getElementById("hudTxt2"), hint = document.getElementById("hint");
+  let lang = "en", state = "dark"; greet.style.opacity = 0; greet.style.transition = "opacity .4s"; setGreet(greet, lang, false);
+  const apply = (k) => { state = k;
+    if (k !== "text" && k !== "galaxy") T.setForm(FORM.tree);
+    if (k === "dark") { T.unlight(600); T.u.uDim.value = 1; greet.style.opacity = 0; hud.style.opacity = 0; B.dissolve(); hint.textContent = "張開手掌，點燈"; }
+    if (k === "lit") { T.light(); tween(T.u.uDim, "value", 1, 400); greet.style.opacity = 1; hud.style.opacity = 0; B.dissolve(); hint.textContent = "比愛心，樹會變成祝福"; }
+    if (k === "text") { T.light(); tween(T.u.uDim, "value", 1, 400); T.setForm(FORM[lang]); greet.style.opacity = 0; hud.style.opacity = 0; B.dissolve(); hint.textContent = "左右揮手，換語言"; }
+    if (k === "galaxy") { T.light(); tween(T.u.uDim, "value", 1, 400); T.setForm(FORM.galaxy); greet.style.opacity = 0; hud.style.opacity = 0; B.dissolve(); hint.textContent = "雙手合上，回到樹"; }
+    if (k === "cross") { tween(T.u.uDim, "value", 0.45, 500); greet.style.opacity = 0; hud.style.opacity = 1; B.show(); playHud(hud, txt, pickHud(lang)); hint.textContent = "雙手分開，蝴蝶就散掉"; } };
+  wireSeg(document.getElementById("segScreen"), apply);
+  wireLang(document.getElementById("langScreen"), l => { lang = l; setGreet(greet, l, state === "lit"); D.lang = l; if (state === "text") T.setForm(FORM[l]); });
+  // 祝福大字的全息反光跟著手（這裡是滑鼠）
+  st.hooks.push({ update(s) { const w = greet.querySelector(".w"); const x = s.pointer ? s.pointer.x : Math.sin(s.t * 0.7) * 0.6; w.style.backgroundPosition = `${50 + x * 45}% 0`; } });
+}
+</script>
