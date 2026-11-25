@@ -135,7 +135,7 @@ async function loadModels(onStep) {
 }
 async function openCamera() {
   if (SRC) { video.src = SRC; video.loop = true; video.muted = true; }
-  else { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }); video.srcObject = stream; } await video.play(); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); }); fitCam(); cam.material.uniforms.uHas.value = 1;
+  else { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }); video.srcObject = stream; } await video.play(); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); }); fitCam(); cam.material.uniforms.uHas.value = 1; $("infoL").textContent = `${video.videoWidth}×${video.videoHeight}  ${SRC ? "FILE" : "CAM"}`;
 }
 function detect(now) {
   if (SIM) { const raw = sim.sample(st.t); return raw; }
@@ -149,7 +149,7 @@ function detect(now) {
 
 /* ---------- 狀態 ---------- */
 const NEXT = { ready: "張開手掌，點燈", open: "握拳，熄燈收樹", fist: "手像撒鹽一樣抖一抖，會下雪", shake: "捏合，掛一顆光球", pinch: "比愛心", heart: "左右揮手，換語言", swipe: "雙手拉開", spread: "雙手合上，變回樹", close: "雙手交疊", cross: "食指畫一顆心", point: "按截圖" };
-let state = "perm", nohandTimer = 0, crossTimer = 0, form = "tree", grabbed = -1, prevWristX = null;
+let state = "perm", nohandTimer = 0, crossTimer = 0, form = "tree", grabbed = -1, prevWristX = null, lastErr = null;
 const trail = [], sparks = [], flakes = [];
 const showToast = (m) => { toast.textContent = m; toast.classList.add("show"); clearTimeout(showToast.t); showToast.t = setTimeout(() => toast.classList.remove("show"), 1500); };
 const setBar = (on) => { bar.innerHTML = on ? `<button id="bReset" type="button">重來</button><button class="pri" id="bShot" type="button">截圖</button>` : ""; bar.hidden = !on; $("bReset")?.addEventListener("click", () => { showToast("已重來"); go("ready"); }); $("bShot")?.addEventListener("click", () => go("done")); };
@@ -157,14 +157,18 @@ const showCard = (html) => { card.innerHTML = html; card.classList.add("show"); 
 function resetScene() { T.setForm(FORM.tree); form = "tree"; T.unlight(400); tween(T.u.uDim, "value", 1, 400); greet.style.opacity = 0; hud.style.opacity = 0; B.dissolve(); D.orbs.forEach(o => { o.hold = null; o.anchor = null; }); grabbed = -1; trail.length = 0; filt.reset(); G.reset(); }
 async function go(k) {
   clearTimeout(nohandTimer); state = k; hint.style.opacity = 1;
-  if (k === "perm") { resetScene(); setBar(false); hint.textContent = ""; showCard(`<div><h4>讓樹看到妳的手</h4><p>影像只在這支手機裡處理，不會上傳。</p><button class="b" id="bAllow" type="button">${SIM || SRC ? "開始" : "允許相機"}</button><div class="mono">chang7856.github.io/xmas-tree</div></div>`); $("bAllow").addEventListener("click", () => go("loading")); }
+  if (k === "perm") { resetScene(); setBar(false); hint.textContent = ""; showCard(`<div><h4>讓樹看到妳的手</h4><p>按下去會跳出相機權限，選「允許」。妳會出現在上半，樹在下半。影像只在這支手機裡處理，不會上傳。</p><button class="b" id="bAllow" type="button">${SIM || SRC ? "開始" : "允許相機"}</button><div class="mono">chang7856.github.io/xmas-tree</div></div>`); $("bAllow").addEventListener("click", () => go("loading")); }
   if (k === "loading") { setBar(false); hint.textContent = ""; showCard(`<div><div class="ring"></div><p id="loadMsg">正在打開相機</p></div>`);
     try { if (!SIM) await openCamera(); if (!landmarker) await loadModels(m => { const e = $("loadMsg"); if (e) e.textContent = m; }); if (state === "loading") go("ready"); }
-    catch (err) { console.error(err); go(String(err && err.name).match(/NotAllowed|NotFound|NotReadable|Security/) ? "nocam" : "unsup"); } }
+    catch (err) { console.error(err); lastErr = err; go(String(err && err.name).match(/NotAllowed|NotFound|NotReadable|Security|Abort|Overconstrained/) || !navigator.mediaDevices ? "nocam" : "unsup"); } }
   if (k === "ready") { resetScene(); hideCard(); setBar(true); hint.textContent = NEXT.ready; lastHandSeen = st.t; if (SIM) simLoop(); }
   if (k === "nohand") { setBar(true); hint.textContent = ""; showCard(`<div><h4>沒偵測到手</h4><p>把手放進畫面，離鏡頭一個手臂的距離。</p></div>`); }
   if (k === "done") { setBar(false); hint.textContent = ""; const img = snapshot(); showCard(`<div><img alt="截下的畫面" src="${img}"><a class="b" id="bSave" href="${img}" download="xmas-tree.jpg">儲存</a><button class="b sec" id="bAgain" type="button">再來一次</button></div>`); $("bAgain").addEventListener("click", () => go("ready")); }
-  if (k === "nocam") { setBar(false); hint.textContent = ""; showCard(`<div><h4 class="err">沒有相機</h4><p>這個裝置沒有可用的相機，或是相機權限被拒絕了。到瀏覽器設定允許相機後重新整理。</p><button class="b sec" id="bTreeOnly" type="button" style="margin:0">只看樹</button></div>`); $("bTreeOnly").addEventListener("click", () => { hideCard(); setBar(true); state = "treeonly"; hint.textContent = "沒有相機，只看樹"; T.light(); }); }
+  if (k === "nocam") { setBar(false); hint.textContent = ""; const n = String(lastErr && lastErr.name || ""); const inApp = window !== window.top || /FBAN|FBAV|Instagram|Line\/|MicroMessenger|Claude/i.test(navigator.userAgent);
+    const why = !navigator.mediaDevices ? "這個瀏覽器不提供相機。" : n === "NotAllowedError" ? "相機權限被拒絕了。" : n === "NotFoundError" ? "找不到相機。" : n === "NotReadableError" ? "相機被別的程式佔用。" : "相機打不開。";
+    const how = inApp ? "妳在 App 裡面開的，App 內建瀏覽器不給相機。按右上角或下方的「用瀏覽器開啟」，改用 Safari 或 Chrome。" : /iPhone|iPad/.test(navigator.userAgent) ? "Safari：點網址列左邊的「大小」或「AA」，選「網站設定」，相機改成「允許」，再按重試。" : /Android/.test(navigator.userAgent) ? "Chrome：點網址列左邊的鎖頭，權限，相機改成「允許」，再按重試。" : "點網址列左邊的鎖頭或相機圖示，相機改成「允許」，再按重試。";
+    showCard(`<div><h4 class="err">${why}</h4><p>${how}</p><button class="b" id="bRetry" type="button">重試</button><button class="b sec" id="bTreeOnly" type="button">只看樹</button><div class="mono">${n || "no mediaDevices"} · ${location.host}</div></div>`);
+    $("bRetry").addEventListener("click", () => go("loading")); $("bTreeOnly").addEventListener("click", () => { hideCard(); setBar(true); state = "treeonly"; hint.textContent = "沒有相機，只看樹"; T.light(); }); }
   if (k === "unsup") { setBar(false); hint.textContent = ""; showCard(`<div><h4 class="err">不支援</h4><p>這個瀏覽器跑不動手勢模型。用 Safari 或 Chrome 開這個連結。</p><button class="b" id="bCopy" type="button">複製連結</button></div>`); $("bCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(location.href); showToast("已複製"); } catch { showToast("請長按網址列複製"); } }); }
   if (!["perm", "loading", "nocam", "unsup"].includes(k) && T.u.uGrow.value < 0.5) T.grow();
 }
