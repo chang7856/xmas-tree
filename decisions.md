@@ -30,3 +30,5 @@
 - 2026-11-25 推 GitHub 要設 http.postBuffer（模型 7.8 MB），否則 HTTP 400。
 - 2026-11-25 Jessie 指正：版面要照影片，上半是人（相機）、下半是樹，不是疊在一起。改成 SPLIT=0.45：相機畫面佔上 45%，樹縮到 0.64 倍放下半；手與臉的座標換算到相機區；骨架只畫在相機區內。
 - 2026-11-25 測試用 ?src=影片 當假相機（test/ 不進 repo）：用 Jessie 傳的 Reel 上半段跑真的 MediaPipe，食指、張開手掌、捏合都辨識到，光軌與點燈都對。
+- 2026-11-25 Jessie 開成品只看到樹沒有人。線上版用 Chrome 假相機裝置（--use-fake-device-for-media-stream + y4m）跑真的 getUserMedia 確認人會出現在上半；所以是她那邊相機沒開成（開到 Artifact 原型頁、App 內建瀏覽器、或權限被拒）。相機失敗卡改成講原因（NotAllowed／NotFound／NotReadable／App 內）、分瀏覽器的開法、可重試。
+- 2026-11-25 沒有 Playwright；用 scratchpad/cdp.mjs（Node 23 內建 WebSocket + DevTools Protocol）驅動 headless Chrome 測相機路徑。
