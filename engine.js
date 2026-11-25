@@ -110,7 +110,7 @@ function textPoints(text, fontFamily, weight, n, width = 2.9, y = 0.02) {
   return out;
 }
 const FORM = { tree: 0, en: 1, zh: 2, tr: 3, galaxy: 4 };
-function makeTree(st, { count = 60000, y0 = -1.15, height = 2.3, mirror = true, snow = true, textWidth = 2.9, galaxyR = 1.75, twoLine = false } = {}) {
+function makeTree(st, { count = 60000, y0 = -1.15, height = 2.3, mirror = true, snow = true, textWidth = 2.9, galaxyR = 1.75, twoLine = false, formY = 0.02 } = {}) {
   const pos = new Float32Array(count * 3), aH = new Float32Array(count), aSeed = new Float32Array(count), aShell = new Float32Array(count), gal = new Float32Array(count * 3);
   for (let i = 0; i < count; i++) {
     const h = Math.pow(Math.random(), 0.85);
@@ -132,19 +132,19 @@ function makeTree(st, { count = 60000, y0 = -1.15, height = 2.3, mirror = true, 
   document.fonts.ready.then(async () => {
     const t0 = twoLine ? "Merry\nChristmas" : "Merry Christmas", t1 = "聖誕快樂", t2 = twoLine ? "Mutlu\nNoeller" : "Mutlu Noeller";
     await Promise.all([document.fonts.load("500 200px 'Instrument Serif'", t0 + t2), document.fonts.load("700 200px 'Noto Serif TC'", t1)]).catch(() => {});
-    g.setAttribute("aT0", new THREE.BufferAttribute(textPoints(t0, "'Instrument Serif',serif", 500, count, textWidth), 3));
-    g.setAttribute("aT1", new THREE.BufferAttribute(textPoints(t1, "'Noto Serif TC',serif", 700, count, twoLine ? textWidth * 0.78 : textWidth * 0.88), 3));
-    g.setAttribute("aT2", new THREE.BufferAttribute(textPoints(t2, "'Instrument Serif',serif", 500, count, textWidth), 3));
+    g.setAttribute("aT0", new THREE.BufferAttribute(textPoints(t0, "'Instrument Serif',serif", 500, count, textWidth, formY), 3));
+    g.setAttribute("aT1", new THREE.BufferAttribute(textPoints(t1, "'Noto Serif TC',serif", 700, count, twoLine ? textWidth * 0.78 : textWidth * 0.88, formY), 3));
+    g.setAttribute("aT2", new THREE.BufferAttribute(textPoints(t2, "'Instrument Serif',serif", 500, count, textWidth, formY), 3));
   });
   const u = { uTime: { value: 0 }, uGrow: { value: 0 }, uCollapse: { value: 0 }, uLit: { value: 0 }, uGrid: { value: 3 }, uDither: { value: 1 }, uDim: { value: 1 }, uPixelRatio: { value: st.DPR },
-    uRes: { value: new THREE.Vector2(1, 1) }, uStarY: { value: y0 + height + 0.08 }, uFormA: { value: 0 }, uFormB: { value: 0 }, uMix: { value: 1 }, uMirror: { value: 0 }, uFloorY: { value: y0 - 0.02 }, uOrn: { value: 1 }, uGalR: { value: galaxyR }, uLamp: { value: 0.02 }, uSizeK: { value: 1 },
+    uRes: { value: new THREE.Vector2(1, 1) }, uStarY: { value: y0 + height + 0.08 }, uFormA: { value: 0 }, uFormB: { value: 0 }, uMix: { value: 1 }, uMirror: { value: 0 }, uFloorY: { value: y0 - 0.02 }, uOrn: { value: 1 }, uGalR: { value: galaxyR }, uFormY: { value: formY }, uLamp: { value: 0.02 }, uSizeK: { value: 1 },
     uGreen: { value: PAL.green }, uGreen2: { value: PAL.green2 }, uCream: { value: PAL.cream }, uGold: { value: PAL.gold }, uPink: { value: PAL.pink }, uCyan: { value: PAL.cyan }, uViolet: { value: PAL.violet } };
-  const VERT_COMMON = `uniform float uTime,uGrow,uCollapse,uLit,uGrid,uPixelRatio,uStarY,uFormA,uFormB,uMix,uMirror,uFloorY,uGalR; uniform vec2 uRes;
+  const VERT_COMMON = `uniform float uTime,uGrow,uCollapse,uLit,uGrid,uPixelRatio,uStarY,uFormA,uFormB,uMix,uMirror,uFloorY,uGalR,uFormY; uniform vec2 uRes;
       attribute float aH,aSeed,aShell; attribute vec3 aT0,aT1,aT2,aG;
       vec3 formPos(float f, vec3 tree){
         if(f<0.5) return tree; if(f<1.5) return aT0; if(f<2.5) return aT1; if(f<3.5) return aT2;
         float r=length(aG.xy)/uGalR; float ang=uTime*(0.05+0.16*(1.-r)); float c=cos(ang),s=sin(ang);
-        vec3 q=vec3(mat2(c,-s,s,c)*aG.xy,aG.z); q.y=q.y*0.62+0.05; return q; }
+        vec3 q=vec3(mat2(c,-s,s,c)*aG.xy,aG.z); q.y=q.y*0.62+uFormY+0.03; return q; }
       float growOf(float h,float seed){ float g=clamp((uGrow*1.75-h-seed*0.3)/0.42,0.,1.); return 1.-pow(1.-g,3.); }
       vec3 treePos(vec3 p0,float h,float seed,float g){ vec3 p=p0; float ang=(1.-g)*12.566; float cs=cos(ang),sn=sin(ang); p.xz=mat2(cs,-sn,sn,cs)*p.xz; p.y=mix(-1.7,p.y,g);
         p.x+=sin(uTime*0.8+h*6.+seed*6.28)*0.012*h; p.z+=cos(uTime*0.7+seed*6.28)*0.008*h; return p; }
@@ -315,7 +315,7 @@ function makeDeco(st, { labels = true, region = null, zone = { x: 0, y: 0, r: 0.
   sg.setAttribute("iCol", new THREE.InstancedBufferAttribute(icol, 3)); sg.setAttribute("iA", new THREE.InstancedBufferAttribute(ia, 1));
   // 光點鏈
   const chainN = 4, perC = 26, cp = new Float32Array(chainN * perC * 3), cs = new Float32Array(chainN * perC), cc = new Float32Array(chainN * perC * 3);
-  for (let c = 0; c < chainN; c++) for (let i = 0; i < perC; i++) { const k = c * perC + i; const side = c < 2 ? -1 : 1; cp[k * 3] = side * (0.86 + (c % 2) * 0.09) + (Math.random() - .5) * 0.03; cp[k * 3 + 1] = area.y1 + 0.1 - i / perC * 1.7 + (Math.random() - .5) * 0.03; cp[k * 3 + 2] = 0;
+  for (let c = 0; c < chainN; c++) for (let i = 0; i < perC; i++) { const k = c * perC + i; const side = c < 2 ? -1 : 1; cp[k * 3] = side * (0.86 + (c % 2) * 0.09) + (Math.random() - .5) * 0.03; cp[k * 3 + 1] = area.y1 + 0.1 - i / perC * (area.y1 - area.y0 + 0.25) + (Math.random() - .5) * 0.03; cp[k * 3 + 2] = 0;
     cs[k] = 3 + Math.pow(Math.random(), 2.5) * 11; const w = Math.random() < 0.12; const col = w ? PAL.cream : PAL.violet; cc.set([col.r, col.g, col.b], k * 3); }
   const cg = new THREE.BufferGeometry(); cg.setAttribute("position", new THREE.BufferAttribute(cp, 3)); cg.setAttribute("aS", new THREE.BufferAttribute(cs, 1)); cg.setAttribute("color", new THREE.BufferAttribute(cc, 3));
   const chain = new THREE.Points(cg, new THREE.ShaderMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, depthTest: false, uniforms: { uT: { value: softDot() }, uTime: { value: 0 }, uPR: { value: st.DPR }, uAspect: { value: 1 } },
@@ -344,7 +344,7 @@ function makeDeco(st, { labels = true, region = null, zone = { x: 0, y: 0, r: 0.
       });
       // 光痕
       const m = new THREE.Matrix4();
-      S.forEach((q, i) => { q.y -= q.sp * dt; if (q.y < area.y0 - 0.7) { q.y = area.y1 + 0.3; q.bx = area.x0 + Math.random() * (area.x1 - area.x0); }
+      S.forEach((q, i) => { q.y -= q.sp * dt; if (q.y < area.y0 - 0.25) { q.y = area.y1 + 0.3; q.bx = area.x0 + Math.random() * (area.x1 - area.x0); }
         let tx = q.bx; const dx = (q.bx - Z.x) * aspect; const yin = Math.abs(q.y + q.len * 0.5 - Z.y) < zr * 1.2; if (yin && Math.abs(dx) < zr * 1.15) tx = Z.x + Math.sign(dx || 1) * zr * 1.15 / aspect;
         q.x += (tx - q.x) * (1 - Math.exp(-dt * 3));
         m.makeScale(0.012, q.len, 1); m.setPosition(q.x * aspect, q.y + q.len * 0.5, 0); inst.setMatrixAt(i, m); });

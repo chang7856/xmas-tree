@@ -5,3 +5,4 @@ design-system/engine.js
 prototype/engine.js
 prototype/hand.js
 .DS_Store
+test/

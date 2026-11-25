@@ -85,13 +85,15 @@ const MP = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35";
 const $ = (id) => document.getElementById(id);
 const Q = new URLSearchParams(location.search); const SIM = Q.get("sim") === "1";
 const portrait = () => innerHeight > innerWidth * 1.1;
+const SPLIT = 0.45; // 上半是人，下半是樹
+const SRC = Q.get("src");
 const W = () => innerWidth, H = () => innerHeight;
 const LANGS = ["en", "zh", "tr"]; let lang = LANGS.includes(Q.get("lang")) ? Q.get("lang") : "en";
 
 /* ---------- 場景 ---------- */
 const stageEl = $("stage"), ov = $("ov"), ovx = ov.getContext("2d"), video = $("video");
 if (!document.createElement("canvas").getContext("webgl2")) { document.body.innerHTML = `<div class="ui"><div class="card show"><div><h4 class="err">不支援</h4><p>這個瀏覽器跑不動 WebGL。用 Safari 或 Chrome 開這個連結。</p></div></div></div>`; throw new Error("no webgl2"); }
-const st = makeStage(stageEl, { fov: 40, z: 4.4 }); st.camera.position.set(0, portrait() ? -0.35 : -0.15, 4.4); st.post.uniforms.uGrain.value = 0.08; st.post.uniforms.uScan.value = 1;
+const st = makeStage(stageEl, { fov: 40, z: 4.4 }); st.camera.position.set(0, 0, 4.4); st.post.uniforms.uGrain.value = 0.08; st.post.uniforms.uScan.value = 1;
 // 鏡頭畫面：影片貼圖 + 萊卡曲線；沒有相機時是暗房漸層
 const vtex = new THREE.VideoTexture(video); vtex.colorSpace = THREE.SRGBColorSpace; vtex.minFilter = THREE.LinearFilter; vtex.magFilter = THREE.LinearFilter; vtex.generateMipmaps = false;
 const cam = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ depthWrite: false, depthTest: false,
@@ -108,23 +110,23 @@ const cam = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMateri
       float l=dot(c,vec3(.299,.587,.114)); c=mix(vec3(l),c,0.85); c*=0.78;
       gl_FragColor=vec4(mix(room,c,uHas),1.); }` }));
 cam.position.z = -3; cam.renderOrder = -1; st.scene.add(cam);
-const fitCam = () => { const dist = st.camera.position.z - cam.position.z; const hh = dist * Math.tan(THREE.MathUtils.degToRad(40) / 2) * 1.02; cam.scale.set(hh * 2 * (W() / H()), hh * 2, 1); cam.position.y = st.camera.position.y;
-  const vw = video.videoWidth || 16, vh = video.videoHeight || 9; const va = vw / vh, ca = W() / H(); const u = cam.material.uniforms.uCover.value; if (va > ca) u.set(ca / va, 1, 0, 0); else u.set(1, va / ca, 0, 0); };
+const fitCam = () => { const dist = st.camera.position.z - cam.position.z; const hh = dist * Math.tan(THREE.MathUtils.degToRad(40) / 2); cam.scale.set(hh * 2 * (W() / H()) * 1.02, hh * 2 * SPLIT * 1.01, 1); cam.position.y = hh - hh * SPLIT;
+  const vw = video.videoWidth || 16, vh = video.videoHeight || 9; const va = vw / vh, ca = W() / (H() * SPLIT); const u = cam.material.uniforms.uCover.value; if (va > ca) u.set(ca / va, 1, 0, 0); else u.set(1, va / ca, 0, 0); };
 addEventListener("resize", fitCam); fitCam();
 const phoneish = portrait();
-const T = makeTree(st, { count: phoneish ? 45000 : 60000, y0: phoneish ? -1.55 : -1.35, height: 2.1, textWidth: phoneish ? 1.55 : 2.9, galaxyR: phoneish ? 1.0 : 1.6, twoLine: phoneish }); T.u.uGrid.value = 2; T.glow.material.uniforms.uDim.value = 0.6;
-const D = makeDeco(st, { labels: false, zone: { x: 0, y: 0.47, r: 0.3 }, orbs: phoneish ? 4 : 6, streaks: phoneish ? 10 : 16, zDepth: 1.2, orbScale: 0.7, sides: true, region: { x0: -0.8, x1: 0.8, y0: 0.3, y1: 0.9 } });
-const B = makeButterfly(st, { scale: 0.2, pos: [0, -0.3, 1.4] });
+const TS = 0.64; const T = makeTree(st, { count: phoneish ? 45000 : 60000, y0: -1.5 / TS + 0.02, height: 2.1, textWidth: (phoneish ? 1.55 : 2.9) / TS, galaxyR: (phoneish ? 1.0 : 1.5) / TS, twoLine: phoneish, formY: -0.82 / TS }); T.scale = TS; T.u.uGrid.value = 2; T.glow.material.uniforms.uDim.value = 0.6;
+const D = makeDeco(st, { labels: false, zone: { x: 0, y: 0.55, r: 0.3 }, orbs: phoneish ? 4 : 6, streaks: phoneish ? 10 : 16, zDepth: 1.2, orbScale: 0.6, sides: true, region: { x0: -0.8, x1: 0.8, y0: 0.22, y1: 0.92 } });
+const B = makeButterfly(st, { scale: 0.16, pos: [0, 0.6, 1.4] });
 const greet = $("greet"), hud = $("hud"), hudTxt = $("hudTxt"), hint = $("hint"), chipG = $("chipG"), chipN = $("chipN"), chipL = $("chipL"), card = $("card"), bar = $("bar"), toast = $("toast");
 setGreet(greet, lang, false); chipL.textContent = lang.toUpperCase(); D.lang = lang;
 
 /* ---------- 手：真的或模擬 ---------- */
 const filt = new HandFilter({ minCutoff: 1.0, beta: 0.02 }); const G = new GestureEngine({ W: W() });
-let hands = [null, null], gInfo = { raw: "none", cand: "none", candN: 0, active: "none" }, lastHandSeen = 0, face = null, faceT = { x: 0, y: 0.47, r: 0.3, on: 0 };
+let hands = [null, null], gInfo = { raw: "none", cand: "none", candN: 0, active: "none" }, lastHandSeen = 0, face = null, faceT = { x: 0, y: 0.55, r: 0.3, on: 0 };
 let landmarker = null, detector = null, lastVideoT = -1, frameN = 0;
 const sim = SIM ? new HandSim() : null;
 // 影片座標（0..1，未鏡射）→ 畫面像素（已鏡射、cover 裁切）
-const toPx = (nx, ny) => { const u = cam.material.uniforms.uCover.value; return [((1 - nx) - 0.5) / u.x * W() + W() / 2, (ny - 0.5) / u.y * H() + H() / 2]; };
+const toPx = (nx, ny) => { const u = cam.material.uniforms.uCover.value; const RH = H() * SPLIT; return [((1 - nx) - 0.5) / u.x * W() + W() / 2, (ny - 0.5) / u.y * RH + RH / 2]; };
 async function loadModels(onStep) {
   const { FilesetResolver, HandLandmarker, FaceDetector } = await import(`${MP}/vision_bundle.mjs`);
   onStep("載入辨識引擎"); const vision = await FilesetResolver.forVisionTasks(`${MP}/wasm`);
@@ -132,8 +134,8 @@ async function loadModels(onStep) {
   onStep("載入臉部模型"); detector = await FaceDetector.createFromOptions(vision, { baseOptions: { modelAssetPath: "./models/blaze_face_short_range.tflite", delegate: "GPU" }, runningMode: "VIDEO", minDetectionConfidence: 0.5 });
 }
 async function openCamera() {
-  const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-  video.srcObject = stream; await video.play(); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); }); fitCam(); cam.material.uniforms.uHas.value = 1;
+  if (SRC) { video.src = SRC; video.loop = true; video.muted = true; }
+  else { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }); video.srcObject = stream; } await video.play(); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); }); fitCam(); cam.material.uniforms.uHas.value = 1;
 }
 function detect(now) {
   if (SIM) { const raw = sim.sample(st.t); return raw; }
@@ -141,7 +143,7 @@ function detect(now) {
   lastVideoT = video.currentTime;
   const r = landmarker.detectForVideo(video, now); const out = [null, null];
   (r.landmarks || []).slice(0, 2).forEach((lm, i) => { out[i] = lm.map(p => toPx(p.x, p.y)); });
-  if (detector && frameN % 6 === 0) { const f = detector.detectForVideo(video, now); const d = f.detections && f.detections[0]; if (d && d.boundingBox) { const b = d.boundingBox, vw = video.videoWidth, vh = video.videoHeight; const c = toPx((b.originX + b.width / 2) / vw, (b.originY + b.height / 2) / vh); const hpx = (b.height / vh) / cam.material.uniforms.uCover.value.y * H(); face = { x: (c[0] / W()) * 2 - 1, y: -((c[1] / H()) * 2 - 1), r: (hpx / 2) / (H() / 2) * 1.25 }; } else face = null; }
+  if (detector && frameN % 6 === 0) { const f = detector.detectForVideo(video, now); const d = f.detections && f.detections[0]; if (d && d.boundingBox) { const b = d.boundingBox, vw = video.videoWidth, vh = video.videoHeight; const c = toPx((b.originX + b.width / 2) / vw, (b.originY + b.height / 2) / vh); const hpx = (b.height / vh) / cam.material.uniforms.uCover.value.y * H() * SPLIT; face = { x: (c[0] / W()) * 2 - 1, y: -((c[1] / H()) * 2 - 1), r: (hpx / 2) / (H() / 2) * 1.25 }; } else face = null; }
   return out;
 }
 
@@ -155,7 +157,7 @@ const showCard = (html) => { card.innerHTML = html; card.classList.add("show"); 
 function resetScene() { T.setForm(FORM.tree); form = "tree"; T.unlight(400); tween(T.u.uDim, "value", 1, 400); greet.style.opacity = 0; hud.style.opacity = 0; B.dissolve(); D.orbs.forEach(o => { o.hold = null; o.anchor = null; }); grabbed = -1; trail.length = 0; filt.reset(); G.reset(); }
 async function go(k) {
   clearTimeout(nohandTimer); state = k; hint.style.opacity = 1;
-  if (k === "perm") { resetScene(); setBar(false); hint.textContent = ""; showCard(`<div><h4>讓樹看到妳的手</h4><p>影像只在這支手機裡處理，不會上傳。</p><button class="b" id="bAllow" type="button">${SIM ? "開始" : "允許相機"}</button><div class="mono">chang7856.github.io/xmas-tree</div></div>`); $("bAllow").addEventListener("click", () => go("loading")); }
+  if (k === "perm") { resetScene(); setBar(false); hint.textContent = ""; showCard(`<div><h4>讓樹看到妳的手</h4><p>影像只在這支手機裡處理，不會上傳。</p><button class="b" id="bAllow" type="button">${SIM || SRC ? "開始" : "允許相機"}</button><div class="mono">chang7856.github.io/xmas-tree</div></div>`); $("bAllow").addEventListener("click", () => go("loading")); }
   if (k === "loading") { setBar(false); hint.textContent = ""; showCard(`<div><div class="ring"></div><p id="loadMsg">正在打開相機</p></div>`);
     try { if (!SIM) await openCamera(); if (!landmarker) await loadModels(m => { const e = $("loadMsg"); if (e) e.textContent = m; }); if (state === "loading") go("ready"); }
     catch (err) { console.error(err); go(String(err && err.name).match(/NotAllowed|NotFound|NotReadable|Security/) ? "nocam" : "unsup"); } }
@@ -170,7 +172,7 @@ function snapshot() { const c = document.createElement("canvas"); const r = st.r
 chipL.addEventListener("click", () => { lang = LANGS[(LANGS.indexOf(lang) + 1) % 3]; chipL.textContent = lang.toUpperCase(); D.lang = lang; setGreet(greet, lang, form !== "text"); if (form === "text") T.setForm(FORM[lang]); });
 
 /* ---------- 手勢 → 場景 ---------- */
-const starPx = () => { const v = new THREE.Vector3(0, (phoneish ? -1.55 : -1.35) + 2.1 + 0.08, 0); v.applyMatrix4(T.treeG.matrixWorld); v.project(st.camera); return [(v.x * 0.5 + 0.5) * W(), (-v.y * 0.5 + 0.5) * H()]; };
+const starPx = () => { const v = new THREE.Vector3(0, -1.5 / TS + 0.02 + 2.1 + 0.08, 0); v.applyMatrix4(T.treeG.matrixWorld); v.project(st.camera); return [(v.x * 0.5 + 0.5) * W(), (-v.y * 0.5 + 0.5) * H()]; };
 const ndc = (p) => ({ x: (p[0] / W()) * 2 - 1, y: -((p[1] / H()) * 2 - 1) });
 const burstSnow = (x, y, n = 36) => { for (let i = 0; i < n; i++) flakes.push({ x: x + (Math.random() - .5) * 40, y: y + (Math.random() - .5) * 20, vx: (Math.random() - .5) * 90, vy: 20 + Math.random() * 60, t: 0, d: 2 + Math.random() * 1.5, g: SNOWG[(Math.random() * SNOWG.length) | 0], s: 9 + Math.random() * 9, r: Math.random() * 6.28 }); };
 G.on((type, g) => {
@@ -218,7 +220,7 @@ st.hooks.push({ update(s, dt) {
   // 骨架、光軌、星火、雪
   const DPR = Math.min(devicePixelRatio || 1, 2); if (ov.width !== W() * DPR || ov.height !== H() * DPR) { ov.width = W() * DPR; ov.height = H() * DPR; }
   ovx.setTransform(DPR, 0, 0, DPR, 0, 0); ovx.clearRect(0, 0, W(), H());
-  drawHands(ovx, hands, { label: gInfo.active !== "none" ? gInfo.active : null });
+  ovx.save(); ovx.beginPath(); ovx.rect(0, 0, W(), H() * SPLIT); ovx.clip(); drawHands(ovx, hands, { label: gInfo.active !== "none" ? gInfo.active : null }); ovx.restore();
   if (trail.length > 1) { ovx.save(); ovx.lineCap = "round"; ovx.lineJoin = "round"; ovx.shadowColor = "rgba(232,193,112,.9)"; ovx.shadowBlur = 14; for (let i = 1; i < trail.length; i++) { const a = 1 - (s.t - trail[i].t) / 1.2; ovx.strokeStyle = `rgba(232,193,112,${a})`; ovx.lineWidth = 2 + 3 * a; ovx.beginPath(); ovx.moveTo(trail[i - 1].x, trail[i - 1].y); ovx.lineTo(trail[i].x, trail[i].y); ovx.stroke(); } ovx.restore(); }
   for (let i = sparks.length - 1; i >= 0; i--) { const p = sparks[i]; p.t += dt; const u = Math.min(1, p.t / p.d); const e = 1 - Math.pow(1 - u, 3); const x = p.x + (p.tx - p.x) * e + Math.sin(u * Math.PI) * p.k, y = p.y + (p.ty - p.y) * e - Math.sin(u * Math.PI) * 60; ovx.fillStyle = `rgba(232,193,112,${1 - u * 0.6})`; ovx.shadowColor = "rgba(232,193,112,.8)"; ovx.shadowBlur = 8; ovx.beginPath(); ovx.arc(x, y, 1.6 + 1.4 * (1 - u), 0, 6.283); ovx.fill(); if (u >= 1) sparks.splice(i, 1); }
   ovx.shadowBlur = 0; ovx.textAlign = "center"; ovx.textBaseline = "middle";
@@ -226,7 +228,7 @@ st.hooks.push({ update(s, dt) {
 } });
 
 /* ---------- 模擬模式：沒有相機時用虛擬手輪流做手勢（?sim=1） ---------- */
-const K = (pose, x, y, at, extra = {}) => ({ pose, x: x / 390 * W(), y: y / 844 * H(), at, size: 80 * W() / 390, ...extra, left: !!extra.left });
+const K = (pose, x, y, at, extra = {}) => { const k = Math.min(W() / 390, H() * SPLIT / 500); return { pose, x: W() / 2 + (x - 195) * k, y: (y - 200) / 644 * H() * SPLIT, at, size: 80 * k, ...extra, left: !!extra.left }; };
 const TRACKS = {
   open: () => [[K("relax", 250, 900, 0), K("open", 240, 560, 0.6, { hold: 2.6 })], null],
   fist: () => [[K("open", 240, 560, 0), K("fist", 240, 570, 0.5, { hold: 2.2 })], null],
@@ -244,7 +246,8 @@ async function simLoop() { if (simRunning) return; simRunning = true; const seq 
   while (state === "ready" || state === "nohand") { for (const [g, ms] of seq) { if (state !== "ready" && state !== "nohand") break; sim.play(TRACKS[g](), st.t); filt.reset(); G.reset(); await delay(ms); } } simRunning = false; }
 
 setInterval(() => { const d = new Date(); $("clock").textContent = `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}  ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; }, 1000);
-const place = () => { const P = portrait(); $("hl0").style.cssText = "left:10%;top:36%"; $("hl1").style.cssText = "left:58%;top:42%"; $("hl2").style.cssText = "left:62%;top:66%"; $("hb0").style.cssText = "left:36%;top:44%;width:16%;height:12%"; $("hd0").style.cssText = "left:50%;top:48%;width:18%;transform:rotate(24deg)"; greet.style.top = P ? "50%" : "38%"; };
+const place = () => { const sp = SPLIT * 100; $("hl0").style.cssText = "left:10%;top:9%"; $("hl1").style.cssText = "left:60%;top:14%"; $("hl2").style.cssText = "left:64%;top:30%"; $("hb0").style.cssText = "left:38%;top:16%;width:16%;height:12%"; $("hd0").style.cssText = "left:52%;top:20%;width:18%;transform:rotate(24deg)"; hudTxt.style.cssText = `left:6%;top:calc(${sp}% - 84px);bottom:auto`;
+  greet.style.top = `${sp}%`; greet.style.transform = "translateY(-50%)"; document.querySelector(".frame").style.bottom = `calc(${100 - sp}% + 6px)`; };
 place(); addEventListener("resize", place);
 go("perm"); T.grow();
 </script>
