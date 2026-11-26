@@ -59,15 +59,16 @@ export function classify(hands, W) {
 
 /* ---------- 手勢狀態機：6 幀成立、10 幀解除、動作手勢看速度 ---------- */
 export class GestureEngine {
-  constructor({ W = 390, enterMs = 150, exitMs = 350 } = {}) { this.W = W; this.enterMs = enterMs; this.exitMs = exitMs; this.cand = "none"; this.candN = 0; this.candSince = 0; this.absentSince = null; this.active = "none"; this.hist = []; this.cool = {}; this.listeners = []; }
+  constructor({ W = 390, enterMs = 150, exitMs = 350, enterFor = { fist: 600, cross: 300 } } = {}) { this.W = W; this.enterMs = enterMs; this.exitMs = exitMs; this.enterFor = enterFor; this.cand = "none"; this.candN = 0; this.candSince = 0; this.absentSince = null; this.active = "none"; this.hist = []; this.cool = {}; this.listeners = []; }
   on(fn) { this.listeners.push(fn); }
   emit(type, detail) { this.listeners.forEach(f => f(type, detail)); }
   update(hands, t) {
     const g = classify(hands, this.W);
     if (g === this.cand) this.candN++; else { this.cand = g; this.candN = 1; this.candSince = t; }
-    this.progress = this.cand === "none" || this.cand === this.active ? 0 : Math.min(1, (t - this.candSince) * 1000 / this.enterMs);
+    const need = this.enterFor[this.cand] || this.enterMs;
+    this.progress = this.cand === "none" || this.cand === this.active ? 0 : Math.min(1, (t - this.candSince) * 1000 / need);
     if (this.cand !== this.active) {
-      if ((t - this.candSince) * 1000 >= this.enterMs && this.cand !== "none" && this.cand !== "two" && this.cand !== "two-open") { this.active = this.cand; this.absentSince = null; this.emit("enter", this.active); }
+      if ((t - this.candSince) * 1000 >= need && this.cand !== "none" && this.cand !== "two" && this.cand !== "two-open") { this.active = this.cand; this.absentSince = null; this.emit("enter", this.active); }
       else if (this.active !== "none") { if (this.absentSince === null) this.absentSince = t; if ((t - this.absentSince) * 1000 >= this.exitMs) { const was = this.active; this.active = "none"; this.absentSince = null; this.emit("exit", was); } }
     } else this.absentSince = null;
     // 動作：揮手（單手 400 ms 橫移 25% 寬）、拉開／合上（雙手 600 ms 距離變化 40% 寬）
