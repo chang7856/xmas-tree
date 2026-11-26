@@ -37,10 +37,10 @@ const C = (h) => new THREE.Color(h);
 const PAL = { night: C("#07100B"), green: C("#1E5C3A"), green2: C("#3C9A63"), cream: C("#EFE3C3"), gold: C("#E8C170"), pink: C("#F2A7D8"), cyan: C("#8FE3FF"), violet: C("#B48CFF"), magenta: C("#FF4FD8") };
 
 /* ---------- 共用：舞台（renderer + composer + 可見才跑） ---------- */
-function makeStage(host, { ortho = false, fov = 32, z = 4.6 } = {}) {
+function makeStage(host, { ortho = false, fov = 32, z = 4.6, dpr = null } = {}) {
   const canvas = host.querySelector("canvas");
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: "high-performance" });
-  const DPR = Math.min(window.devicePixelRatio || 1, 1.5);
+  const DPR = dpr || Math.min(window.devicePixelRatio || 1, 1.5);
   renderer.setPixelRatio(DPR);
   renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
   const scene = new THREE.Scene(); scene.background = PAL.night.clone();

@@ -35,7 +35,10 @@ button.chip{cursor:pointer}
 .hud .box{position:absolute;border:1px solid var(--alert);opacity:0}
 .hud .dash{position:absolute;border-top:1px dashed rgba(143,227,255,.5);transform-origin:0 0;opacity:0}
 .hud .txt{position:absolute;left:6%;bottom:calc(19% + env(safe-area-inset-bottom,0px));color:var(--cream);line-height:1.7;white-space:pre-wrap;max-width:88%}
-.hint{position:absolute;left:0;right:0;bottom:calc(96px + env(safe-area-inset-bottom,0px));text-align:center;font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:rgba(239,227,195,.85);transition:opacity .3s;padding:0 16px}
+.hint{position:absolute;left:16px;right:16px;text-align:center;transition:opacity .3s;pointer-events:none}
+.hint span{display:inline-block;font-size:15px;font-weight:500;line-height:1.4;padding:9px 16px;border-radius:999px;background:rgba(7,16,11,.55);border:1px solid rgba(239,227,195,.25);color:var(--cream);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.hint span:empty{display:none}
+.dbg{position:absolute;left:12px;bottom:calc(10px + env(safe-area-inset-bottom,0px));font-family:var(--mono);font-size:10px;color:rgba(239,227,195,.6);white-space:pre}
 .bar{position:absolute;left:16px;right:16px;bottom:calc(22px + env(safe-area-inset-bottom,0px));display:flex;gap:10px;justify-content:center;padding:10px;border-radius:16px;background:rgba(239,227,195,.06);border:1px solid rgba(239,227,195,.14);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);pointer-events:auto;max-width:420px;margin:0 auto}
 .bar button{font:inherit;font-size:14px;font-weight:500;min-height:46px;padding:0 20px;border-radius:12px;border:1px solid rgba(239,227,195,.3);background:transparent;color:var(--cream);cursor:pointer}
 .bar button.pri{background:var(--cream);color:var(--night);border-color:var(--cream)}
@@ -69,8 +72,8 @@ button.chip{cursor:pointer}
     <div class="box" id="hb0"></div><div class="dash" id="hd0"></div>
     <div class="txt" id="hudTxt"></div>
   </div>
-  <div class="hint" id="hint"></div>
-  <div class="bar" id="bar"></div>
+  <div class="hint"><span id="hint"></span></div>
+  <div class="dbg" id="fpsOut" hidden></div>
   <div class="toast" id="toast"></div>
   <div class="card" id="card"></div>
 </div>
@@ -93,7 +96,8 @@ const LANGS = ["en", "zh", "tr"]; let lang = LANGS.includes(Q.get("lang")) ? Q.g
 /* ---------- 場景 ---------- */
 const stageEl = $("stage"), ov = $("ov"), ovx = ov.getContext("2d"), video = $("video");
 if (!document.createElement("canvas").getContext("webgl2")) { document.body.innerHTML = `<div class="ui"><div class="card show"><div><h4 class="err">不支援</h4><p>這個瀏覽器跑不動 WebGL。用 Safari 或 Chrome 開這個連結。</p></div></div></div>`; throw new Error("no webgl2"); }
-const st = makeStage(stageEl, { fov: 40, z: 4.4 }); st.camera.position.set(0, 0, 4.4); st.post.uniforms.uGrain.value = 0.08; st.post.uniforms.uScan.value = 1;
+const PHONE = innerWidth < 600 || /iPhone|Android/i.test(navigator.userAgent);
+const st = makeStage(stageEl, { fov: 40, z: 4.4, dpr: PHONE ? 1 : Math.min(devicePixelRatio || 1, 1.5) }); st.camera.position.set(0, 0, 4.4); st.post.uniforms.uGrain.value = 0.08; st.post.uniforms.uScan.value = 1;
 // 鏡頭畫面：影片貼圖 + 萊卡曲線；沒有相機時是暗房漸層
 const vtex = new THREE.VideoTexture(video); vtex.colorSpace = THREE.SRGBColorSpace; vtex.minFilter = THREE.LinearFilter; vtex.magFilter = THREE.LinearFilter; vtex.generateMipmaps = false;
 const cam = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ depthWrite: false, depthTest: false,
@@ -114,10 +118,11 @@ const fitCam = () => { const dist = st.camera.position.z - cam.position.z; const
   const vw = video.videoWidth || 16, vh = video.videoHeight || 9; const va = vw / vh, ca = W() / (H() * SPLIT); const u = cam.material.uniforms.uCover.value; if (va > ca) u.set(ca / va, 1, 0, 0); else u.set(1, va / ca, 0, 0); };
 addEventListener("resize", fitCam); fitCam();
 const phoneish = portrait();
-const TS = 0.64; const T = makeTree(st, { count: phoneish ? 45000 : 60000, y0: -1.5 / TS + 0.02, height: 2.1, textWidth: (phoneish ? 1.55 : 2.9) / TS, galaxyR: (phoneish ? 1.0 : 1.5) / TS, twoLine: phoneish, formY: -0.82 / TS }); T.scale = TS; T.u.uGrid.value = 2; T.glow.material.uniforms.uDim.value = 0.6;
-const D = makeDeco(st, { labels: false, zone: { x: 0, y: 0.55, r: 0.3 }, orbs: phoneish ? 4 : 6, streaks: phoneish ? 10 : 16, zDepth: 1.2, orbScale: 0.6, sides: true, region: { x0: -0.8, x1: 0.8, y0: 0.22, y1: 0.92 } });
+const TS = 0.64; const T = makeTree(st, { count: PHONE ? 26000 : 60000, mirror: !PHONE, y0: -1.5 / TS + 0.02, height: 2.1, textWidth: (phoneish ? 1.55 : 2.9) / TS, galaxyR: (phoneish ? 1.0 : 1.5) / TS, twoLine: phoneish, formY: -0.82 / TS }); T.scale = TS; T.u.uGrid.value = 2; T.glow.material.uniforms.uDim.value = 0.6;
+const D = makeDeco(st, { labels: false, zone: { x: 0, y: 0.55, r: 0.3 }, orbs: phoneish ? 4 : 6, streaks: PHONE ? 8 : 16, zDepth: 1.2, orbScale: 0.6, sides: true, region: { x0: -0.8, x1: 0.8, y0: 0.22, y1: 0.92 } });
 const B = makeButterfly(st, { scale: 0.16, pos: [0, 0.6, 1.4] });
-const greet = $("greet"), hud = $("hud"), hudTxt = $("hudTxt"), hint = $("hint"), chipG = $("chipG"), chipN = $("chipN"), chipL = $("chipL"), card = $("card"), bar = $("bar"), toast = $("toast");
+const greet = $("greet"), hud = $("hud"), hudTxt = $("hudTxt"), hint = $("hint"), chipG = $("chipG"), chipN = $("chipN"), chipL = $("chipL"), card = $("card"), toast = $("toast"), dbg = $("fpsOut");
+if (Q.get("debug") === "1") dbg.hidden = false;
 setGreet(greet, lang, false); chipL.textContent = lang.toUpperCase(); D.lang = lang;
 
 /* ---------- 手：真的或模擬 ---------- */
@@ -135,24 +140,24 @@ async function loadModels(onStep) {
 }
 async function openCamera() {
   if (SRC) { video.src = SRC; video.loop = true; video.muted = true; }
-  else { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false }); video.srcObject = stream; } await video.play(); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); }); fitCam(); cam.material.uniforms.uHas.value = 1; $("infoL").textContent = `${video.videoWidth}×${video.videoHeight}  ${SRC ? "FILE" : "CAM"}`;
+  else { const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user", width: { ideal: PHONE ? 640 : 1280 }, height: { ideal: PHONE ? 480 : 720 }, frameRate: { ideal: 30 } }, audio: false }); video.srcObject = stream; } await video.play(); await new Promise(r => { if (video.videoWidth) r(); else video.onloadedmetadata = () => r(); }); fitCam(); cam.material.uniforms.uHas.value = 1; $("infoL").textContent = `${video.videoWidth}×${video.videoHeight}  ${SRC ? "FILE" : "CAM"}`;
 }
 function detect(now) {
   if (SIM) { const raw = sim.sample(st.t); return raw; }
-  if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoT) return hands;
+  if (!landmarker || video.readyState < 2 || video.currentTime === lastVideoT || (PHONE && frameN % 2)) return hands;
   lastVideoT = video.currentTime;
   const r = landmarker.detectForVideo(video, now); const out = [null, null];
   (r.landmarks || []).slice(0, 2).forEach((lm, i) => { out[i] = lm.map(p => toPx(p.x, p.y)); });
-  if (detector && frameN % 6 === 0) { const f = detector.detectForVideo(video, now); const d = f.detections && f.detections[0]; if (d && d.boundingBox) { const b = d.boundingBox, vw = video.videoWidth, vh = video.videoHeight; const c = toPx((b.originX + b.width / 2) / vw, (b.originY + b.height / 2) / vh); const hpx = (b.height / vh) / cam.material.uniforms.uCover.value.y * H() * SPLIT; face = { x: (c[0] / W()) * 2 - 1, y: -((c[1] / H()) * 2 - 1), r: (hpx / 2) / (H() / 2) * 1.25 }; } else face = null; }
+  if (detector && frameN % (PHONE ? 12 : 6) === 0) { const f = detector.detectForVideo(video, now); const d = f.detections && f.detections[0]; if (d && d.boundingBox) { const b = d.boundingBox, vw = video.videoWidth, vh = video.videoHeight; const c = toPx((b.originX + b.width / 2) / vw, (b.originY + b.height / 2) / vh); const hpx = (b.height / vh) / cam.material.uniforms.uCover.value.y * H() * SPLIT; face = { x: (c[0] / W()) * 2 - 1, y: -((c[1] / H()) * 2 - 1), r: (hpx / 2) / (H() / 2) * 1.25 }; } else face = null; }
   return out;
 }
 
 /* ---------- 狀態 ---------- */
-const NEXT = { ready: "張開手掌，點燈", open: "握拳，熄燈收樹", fist: "手像撒鹽一樣抖一抖，會下雪", shake: "捏合，掛一顆光球", pinch: "比愛心", heart: "左右揮手，換語言", swipe: "雙手拉開", spread: "雙手合上，變回樹", close: "雙手交疊", cross: "食指畫一顆心", point: "按截圖" };
+const NEXT = { ready: "張開手掌，點燈", open: "握拳，熄燈收樹", fist: "手像撒鹽一樣抖一抖，會下雪", shake: "捏合，掛一顆光球", pinch: "比愛心", heart: "左右揮手，換語言", swipe: "雙手拉開", spread: "雙手合上，變回樹", close: "雙手交疊", cross: "食指畫一顆心", point: "張開手掌，再點一次燈" };
 let state = "perm", nohandTimer = 0, crossTimer = 0, form = "tree", grabbed = -1, prevWristX = null, lastErr = null;
-const trail = [], sparks = [], flakes = [];
+const trail = [], sparks = [], flakes = []; let fpsN = 0, fpsT = 0;
 const showToast = (m) => { toast.textContent = m; toast.classList.add("show"); clearTimeout(showToast.t); showToast.t = setTimeout(() => toast.classList.remove("show"), 1500); };
-const setBar = (on) => { bar.innerHTML = on ? `<button id="bReset" type="button">重來</button><button class="pri" id="bShot" type="button">截圖</button>` : ""; bar.hidden = !on; $("bReset")?.addEventListener("click", () => { showToast("已重來"); go("ready"); }); $("bShot")?.addEventListener("click", () => go("done")); };
+const setBar = () => {};
 const showCard = (html) => { card.innerHTML = html; card.classList.add("show"); }; const hideCard = () => card.classList.remove("show");
 function resetScene() { T.setForm(FORM.tree); form = "tree"; T.unlight(400); tween(T.u.uDim, "value", 1, 400); greet.style.opacity = 0; hud.style.opacity = 0; B.dissolve(); D.orbs.forEach(o => { o.hold = null; o.anchor = null; }); grabbed = -1; trail.length = 0; filt.reset(); G.reset(); }
 async function go(k) {
@@ -160,10 +165,9 @@ async function go(k) {
   if (k === "perm") { resetScene(); setBar(false); hint.textContent = ""; showCard(`<div><h4>讓樹看到妳的手</h4><p>按下去會跳出相機權限，選「允許」。妳會出現在上半，樹在下半。影像只在這支手機裡處理，不會上傳。</p><button class="b" id="bAllow" type="button">${SIM || SRC ? "開始" : "允許相機"}</button><div class="mono">chang7856.github.io/xmas-tree</div></div>`); $("bAllow").addEventListener("click", () => go("loading")); }
   if (k === "loading") { setBar(false); hint.textContent = ""; showCard(`<div><div class="ring"></div><p id="loadMsg">正在打開相機</p></div>`);
     try { if (!SIM) await openCamera(); if (!landmarker) await loadModels(m => { const e = $("loadMsg"); if (e) e.textContent = m; }); if (state === "loading") go("ready"); }
-    catch (err) { console.error(err); lastErr = err; go(String(err && err.name).match(/NotAllowed|NotFound|NotReadable|Security|Abort|Overconstrained/) || !navigator.mediaDevices ? "nocam" : "unsup"); } }
+    catch (err) { console.error(err); lastErr = err; window.__lastErr = String(err && (err.stack || err.message || err)); go(String(err && err.name).match(/NotAllowed|NotFound|NotReadable|Security|Abort|Overconstrained/) || !navigator.mediaDevices ? "nocam" : "unsup"); } }
   if (k === "ready") { resetScene(); hideCard(); setBar(true); hint.textContent = NEXT.ready; lastHandSeen = st.t; if (SIM) simLoop(); }
   if (k === "nohand") { setBar(true); hint.textContent = ""; showCard(`<div><h4>沒偵測到手</h4><p>把手放進畫面，離鏡頭一個手臂的距離。</p></div>`); }
-  if (k === "done") { setBar(false); hint.textContent = ""; const img = snapshot(); showCard(`<div><img alt="截下的畫面" src="${img}"><a class="b" id="bSave" href="${img}" download="xmas-tree.jpg">儲存</a><button class="b sec" id="bAgain" type="button">再來一次</button></div>`); $("bAgain").addEventListener("click", () => go("ready")); }
   if (k === "nocam") { setBar(false); hint.textContent = ""; const n = String(lastErr && lastErr.name || ""); const inApp = window !== window.top || /FBAN|FBAV|Instagram|Line\/|MicroMessenger|Claude/i.test(navigator.userAgent);
     const why = !navigator.mediaDevices ? "這個瀏覽器不提供相機。" : n === "NotAllowedError" ? "相機權限被拒絕了。" : n === "NotFoundError" ? "找不到相機。" : n === "NotReadableError" ? "相機被別的程式佔用。" : "相機打不開。";
     const how = inApp ? "妳在 App 裡面開的，App 內建瀏覽器不給相機。按右上角或下方的「用瀏覽器開啟」，改用 Safari 或 Chrome。" : /iPhone|iPad/.test(navigator.userAgent) ? "Safari：點網址列左邊的「大小」或「AA」，選「網站設定」，相機改成「允許」，再按重試。" : /Android/.test(navigator.userAgent) ? "Chrome：點網址列左邊的鎖頭，權限，相機改成「允許」，再按重試。" : "點網址列左邊的鎖頭或相機圖示，相機改成「允許」，再按重試。";
@@ -172,7 +176,6 @@ async function go(k) {
   if (k === "unsup") { setBar(false); hint.textContent = ""; showCard(`<div><h4 class="err">不支援</h4><p>這個瀏覽器跑不動手勢模型。用 Safari 或 Chrome 開這個連結。</p><button class="b" id="bCopy" type="button">複製連結</button></div>`); $("bCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(location.href); showToast("已複製"); } catch { showToast("請長按網址列複製"); } }); }
   if (!["perm", "loading", "nocam", "unsup"].includes(k) && T.u.uGrow.value < 0.5) T.grow();
 }
-function snapshot() { const c = document.createElement("canvas"); const r = st.renderer.domElement; c.width = r.width; c.height = r.height; const x = c.getContext("2d"); st.composer.render(); x.drawImage(r, 0, 0); x.drawImage(ov, 0, 0, c.width, c.height); return c.toDataURL("image/jpeg", 0.88); }
 chipL.addEventListener("click", () => { lang = LANGS[(LANGS.indexOf(lang) + 1) % 3]; chipL.textContent = lang.toUpperCase(); D.lang = lang; setGreet(greet, lang, form !== "text"); if (form === "text") T.setForm(FORM[lang]); });
 
 /* ---------- 手勢 → 場景 ---------- */
@@ -219,12 +222,13 @@ st.hooks.push({ update(s, dt) {
   if (state === "nohand" && hands.some(Boolean)) { hideCard(); state = "ready"; hint.textContent = NEXT.ready; }
   // 晶片
   if (gInfo.active !== "none") { chipG.dataset.s = "on"; chipG.firstChild.textContent = names[gInfo.active] + " 成立"; chipN.textContent = ""; }
-  else if (gInfo.cand !== "none") { chipG.dataset.s = "detect"; chipG.firstChild.textContent = "偵測中 " + (names[gInfo.cand] || gInfo.cand); chipN.textContent = `${Math.min(gInfo.candN, 6)}/6`; }
+  else if (gInfo.cand !== "none" && gInfo.cand !== "two") { chipG.dataset.s = "detect"; chipG.firstChild.textContent = names[gInfo.cand] || gInfo.cand; chipN.textContent = ""; }
   else { chipG.dataset.s = "idle"; chipG.firstChild.textContent = hands.some(Boolean) ? "就緒" : "待機"; chipN.textContent = ""; }
   // 骨架、光軌、星火、雪
-  const DPR = Math.min(devicePixelRatio || 1, 2); if (ov.width !== W() * DPR || ov.height !== H() * DPR) { ov.width = W() * DPR; ov.height = H() * DPR; }
+  const DPR = PHONE ? 1 : Math.min(devicePixelRatio || 1, 1.5); if (ov.width !== W() * DPR || ov.height !== H() * DPR) { ov.width = W() * DPR; ov.height = H() * DPR; }
   ovx.setTransform(DPR, 0, 0, DPR, 0, 0); ovx.clearRect(0, 0, W(), H());
-  ovx.save(); ovx.beginPath(); ovx.rect(0, 0, W(), H() * SPLIT); ovx.clip(); drawHands(ovx, hands, { label: gInfo.active !== "none" ? gInfo.active : null }); ovx.restore();
+  ovx.save(); ovx.beginPath(); ovx.rect(0, 0, W(), H() * SPLIT); ovx.clip(); drawHands(ovx, hands, { label: gInfo.active !== "none" ? names[gInfo.active] : (gInfo.cand !== "none" && gInfo.cand !== "two" ? names[gInfo.cand] : null), progress: gInfo.progress || 0, active: gInfo.active !== "none" }); ovx.restore();
+  if (!dbg.hidden) { fpsN++; fpsT += dt; if (fpsT >= 0.5) { dbg.textContent = `${Math.round(fpsN / fpsT)} fps  ${W()}×${H()}  dpr ${st.DPR}  點 ${PHONE ? 26000 : 60000}  手 ${hands.filter(Boolean).length}`; fpsN = 0; fpsT = 0; } }
   if (trail.length > 1) { ovx.save(); ovx.lineCap = "round"; ovx.lineJoin = "round"; ovx.shadowColor = "rgba(232,193,112,.9)"; ovx.shadowBlur = 14; for (let i = 1; i < trail.length; i++) { const a = 1 - (s.t - trail[i].t) / 1.2; ovx.strokeStyle = `rgba(232,193,112,${a})`; ovx.lineWidth = 2 + 3 * a; ovx.beginPath(); ovx.moveTo(trail[i - 1].x, trail[i - 1].y); ovx.lineTo(trail[i].x, trail[i].y); ovx.stroke(); } ovx.restore(); }
   for (let i = sparks.length - 1; i >= 0; i--) { const p = sparks[i]; p.t += dt; const u = Math.min(1, p.t / p.d); const e = 1 - Math.pow(1 - u, 3); const x = p.x + (p.tx - p.x) * e + Math.sin(u * Math.PI) * p.k, y = p.y + (p.ty - p.y) * e - Math.sin(u * Math.PI) * 60; ovx.fillStyle = `rgba(232,193,112,${1 - u * 0.6})`; ovx.shadowColor = "rgba(232,193,112,.8)"; ovx.shadowBlur = 8; ovx.beginPath(); ovx.arc(x, y, 1.6 + 1.4 * (1 - u), 0, 6.283); ovx.fill(); if (u >= 1) sparks.splice(i, 1); }
   ovx.shadowBlur = 0; ovx.textAlign = "center"; ovx.textBaseline = "middle";
@@ -251,7 +255,7 @@ async function simLoop() { if (simRunning) return; simRunning = true; const seq 
 
 setInterval(() => { const d = new Date(); $("clock").textContent = `${String(d.getMonth() + 1).padStart(2, "0")}.${String(d.getDate()).padStart(2, "0")}  ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`; }, 1000);
 const place = () => { const sp = SPLIT * 100; $("hl0").style.cssText = "left:10%;top:9%"; $("hl1").style.cssText = "left:60%;top:14%"; $("hl2").style.cssText = "left:64%;top:30%"; $("hb0").style.cssText = "left:38%;top:16%;width:16%;height:12%"; $("hd0").style.cssText = "left:52%;top:20%;width:18%;transform:rotate(24deg)"; hudTxt.style.cssText = `left:6%;top:calc(${sp}% - 84px);bottom:auto`;
-  greet.style.top = `${sp}%`; greet.style.transform = "translateY(-50%)"; document.querySelector(".frame").style.bottom = `calc(${100 - sp}% + 6px)`; };
+  greet.style.top = `${sp}%`; greet.style.transform = "translateY(-50%)"; document.querySelector(".frame").style.bottom = `calc(${100 - sp}% + 6px)`; document.querySelector(".hint").style.top = `calc(${sp}% + 14px)`; };
 place(); addEventListener("resize", place);
 go("perm"); T.grow();
 </script>

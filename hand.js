@@ -59,16 +59,17 @@ export function classify(hands, W) {
 
 /* ---------- 手勢狀態機：6 幀成立、10 幀解除、動作手勢看速度 ---------- */
 export class GestureEngine {
-  constructor({ W = 390, enter = 6, exit = 10 } = {}) { this.W = W; this.enter = enter; this.exit = exit; this.cand = "none"; this.candN = 0; this.active = "none"; this.absentN = 0; this.hist = []; this.cool = {}; this.listeners = []; }
+  constructor({ W = 390, enterMs = 150, exitMs = 350 } = {}) { this.W = W; this.enterMs = enterMs; this.exitMs = exitMs; this.cand = "none"; this.candN = 0; this.candSince = 0; this.absentSince = null; this.active = "none"; this.hist = []; this.cool = {}; this.listeners = []; }
   on(fn) { this.listeners.push(fn); }
   emit(type, detail) { this.listeners.forEach(f => f(type, detail)); }
   update(hands, t) {
     const g = classify(hands, this.W);
-    if (g === this.cand) this.candN++; else { this.cand = g; this.candN = 1; }
+    if (g === this.cand) this.candN++; else { this.cand = g; this.candN = 1; this.candSince = t; }
+    this.progress = this.cand === "none" || this.cand === this.active ? 0 : Math.min(1, (t - this.candSince) * 1000 / this.enterMs);
     if (this.cand !== this.active) {
-      if (this.candN >= this.enter && this.cand !== "none" && this.cand !== "two" && this.cand !== "two-open") { this.active = this.cand; this.absentN = 0; this.emit("enter", this.active); }
-      else if (this.active !== "none") { this.absentN++; if (this.absentN >= this.exit) { const was = this.active; this.active = "none"; this.emit("exit", was); } }
-    } else this.absentN = 0;
+      if ((t - this.candSince) * 1000 >= this.enterMs && this.cand !== "none" && this.cand !== "two" && this.cand !== "two-open") { this.active = this.cand; this.absentSince = null; this.emit("enter", this.active); }
+      else if (this.active !== "none") { if (this.absentSince === null) this.absentSince = t; if ((t - this.absentSince) * 1000 >= this.exitMs) { const was = this.active; this.active = "none"; this.absentSince = null; this.emit("exit", was); } }
+    } else this.absentSince = null;
     // 動作：揮手（單手 400 ms 橫移 25% 寬）、拉開／合上（雙手 600 ms 距離變化 40% 寬）
     const hs = hands.filter(Boolean);
     const rec = { t, x: hs.length === 1 ? hs[0][0][0] : null, dist: hs.length === 2 ? d2(hs[0][0], hs[1][0]) : null };
@@ -80,9 +81,9 @@ export class GestureEngine {
     rec.y = hs.length === 1 ? hs[0][0][1] : null;
     if (rec.y !== null) { const ys = this.hist.filter(r => r.y !== null && t - r.t <= 0.6).map(r => r.y); let rev = 0, dir = 0, ext = ys[0] ?? rec.y; for (const y of ys) { const d = y - ext; if (Math.abs(d) > this.W * 0.03) { const nd = Math.sign(d); if (dir && nd !== dir) rev++; dir = nd; ext = y; } }
       if (rev >= 3 && (!this.cool.shake || t - this.cool.shake > 0.45)) { this.cool.shake = t; this.emit("shake", { x: hs[0][12][0], y: hs[0][12][1] }); } }
-    return { raw: g, cand: this.cand, candN: this.candN, active: this.active };
+    return { raw: g, cand: this.cand, candN: this.candN, progress: this.progress, active: this.active };
   }
-  reset() { this.cand = "none"; this.candN = 0; this.active = "none"; this.absentN = 0; this.hist = []; }
+  reset() { this.cand = "none"; this.candN = 0; this.candSince = 0; this.active = "none"; this.absentSince = null; this.hist = []; this.progress = 0; }
 }
 
 /* ---------- 虛擬手：用姿勢參數產生 21 點 ---------- */
@@ -136,13 +137,16 @@ export class HandSim {
 }
 
 /* 畫骨架：米白線、關節點、指尖亮點，像參考影片 */
-export function drawHands(ctx, hands, { color = "rgba(239,227,195,.95)", glow = "rgba(143,227,255,.9)", label = null, dpr = 1 } = {}) {
+export function drawHands(ctx, hands, { color = "rgba(239,227,195,.95)", glow = "rgba(143,227,255,.35)", label = null, dpr = 1, progress = 0, active = false } = {}) {
   ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
   hands.forEach(h => { if (!h) return;
-    ctx.shadowColor = glow; ctx.shadowBlur = 10 * dpr; ctx.strokeStyle = color; ctx.lineWidth = 2 * dpr;
-    ctx.beginPath(); HAND_CONN.forEach(([a, b]) => { ctx.moveTo(h[a][0], h[a][1]); ctx.lineTo(h[b][0], h[b][1]); }); ctx.stroke();
-    ctx.shadowBlur = 0; ctx.fillStyle = color; h.forEach((p, i) => { ctx.beginPath(); ctx.arc(p[0], p[1], ([4, 8, 12, 16, 20].includes(i) ? 3.4 : 2.2) * dpr, 0, 6.283); ctx.fill(); });
-    if (label) { ctx.font = `500 ${10 * dpr}px "IBM Plex Mono", monospace`; ctx.fillStyle = "rgba(143,227,255,.9)"; ctx.fillText(label, h[0][0] + 10 * dpr, h[0][1] + 16 * dpr); }
+    ctx.beginPath(); HAND_CONN.forEach(([a, b]) => { ctx.moveTo(h[a][0], h[a][1]); ctx.lineTo(h[b][0], h[b][1]); });
+    ctx.strokeStyle = glow; ctx.lineWidth = 7 * dpr; ctx.stroke(); ctx.strokeStyle = color; ctx.lineWidth = 2 * dpr; ctx.stroke();
+    ctx.fillStyle = color; h.forEach((p, i) => { ctx.beginPath(); ctx.arc(p[0], p[1], ([4, 8, 12, 16, 20].includes(i) ? 3.4 : 2.2) * dpr, 0, 6.283); ctx.fill(); });
+    // 手腕的進度環：手勢正在成立時長出來，成立後整圈亮
+    const r = 16 * dpr; if (progress > 0 || active) { ctx.beginPath(); ctx.arc(h[0][0], h[0][1], r, 0, 6.283); ctx.strokeStyle = "rgba(239,227,195,.25)"; ctx.lineWidth = 2 * dpr; ctx.stroke();
+      ctx.beginPath(); ctx.arc(h[0][0], h[0][1], r, -Math.PI / 2, -Math.PI / 2 + 6.283 * (active ? 1 : progress)); ctx.strokeStyle = active ? "rgba(143,227,255,1)" : "rgba(232,193,112,1)"; ctx.lineWidth = 3 * dpr; ctx.stroke(); }
+    if (label) { ctx.font = `500 ${11 * dpr}px "Noto Sans TC","IBM Plex Mono",sans-serif`; ctx.fillStyle = "rgba(143,227,255,1)"; ctx.fillText(label, h[0][0] + 22 * dpr, h[0][1] + 4 * dpr); }
   });
   ctx.restore();
 }

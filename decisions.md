@@ -32,3 +32,5 @@
 - 2026-11-25 測試用 ?src=影片 當假相機（test/ 不進 repo）：用 Jessie 傳的 Reel 上半段跑真的 MediaPipe，食指、張開手掌、捏合都辨識到，光軌與點燈都對。
 - 2026-11-25 Jessie 開成品只看到樹沒有人。線上版用 Chrome 假相機裝置（--use-fake-device-for-media-stream + y4m）跑真的 getUserMedia 確認人會出現在上半；所以是她那邊相機沒開成（開到 Artifact 原型頁、App 內建瀏覽器、或權限被拒）。相機失敗卡改成講原因（NotAllowed／NotFound／NotReadable／App 內）、分瀏覽器的開法、可重試。
 - 2026-11-25 沒有 Playwright；用 scratchpad/cdp.mjs（Node 23 內建 WebSocket + DevTools Protocol）驅動 headless Chrome 測相機路徑。
+- 2026-11-26 Jessie：動畫不順、不直覺；底部的截圖與重來拿掉。做法：手機分級（DPR 1、26k 點、不畫鏡面、影像 640×480、手每 2 幀、臉每 12 幀）、手勢改時間制（150 ms 成立、350 ms 解除）、手腕畫進度環、骨架不用 shadowBlur、提示放大移到樹區上方、拿掉底部列與截圖。
+- 2026-11-26 坑：頁面元素 id 不能叫 dbg，window.dbg 會蓋掉 MediaPipe wasm 的全域 dbg 函式，模型載入會炸成 TypeError。

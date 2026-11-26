@@ -206,7 +206,7 @@ td.num{font-variant-numeric:tabular-nums;white-space:nowrap}
   <h3>手跟得絲滑的做法</h3>
   <ul>
     <li>21 個手部關鍵點先過 One Euro 濾波（minCutoff 1.0、beta 0.02），靜止不抖、快動不拖。</li>
-    <li>手勢要連續 6 幀（約 200 ms）成立才觸發，連續 10 幀不成立才解除，不會閃爍。</li>
+    <li>手勢持續 150 ms 才成立，消失 350 ms 才解除，不會閃爍；手腕上畫一個進度環。</li>
     <li>辨識 30 fps，畫面 60 fps，中間用插值補幀。</li>
     <li>手掉出畫面時，所有跟手的東西 400 ms 內淡出，回來再淡入。</li>
   </ul>

@@ -354,7 +354,7 @@ td.num,td.mono{font-family:var(--mono);font-size:13px;font-variant-numeric:tabul
   <h3>跟手</h3>
   <ul>
     <li>關鍵點先過 One Euro 濾波：<code>minCutoff 1.0 · beta 0.02</code>。</li>
-    <li>手勢連續 6 幀成立才觸發，連續 10 幀不成立才解除。</li>
+    <li>手勢持續 150 ms 才成立，消失 350 ms 才解除；手腕上的環是成立的進度。</li>
     <li>跟手的東西用彈簧 <code>k=170 d=14</code>，展開用 <code>k=170 d=16</code>（過衝 8%）。</li>
     <li>手離開畫面，跟手的東西 400 ms 淡出；回來 300 ms 淡入。</li>
   </ul>
